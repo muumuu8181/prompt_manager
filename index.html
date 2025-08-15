@@ -113,9 +113,10 @@
                     loginBtn.style.display = 'none';
                     logoutBtn.style.display = 'inline-block';
                     
-                    // ログイン時にやらかしリストとClaude プロンプトを自動読み込み
+                    // ログイン時にやらかしリスト、課題リスト、Claude プロンプトを自動読み込み
                     setTimeout(() => {
                         window.loadYarakashiList();
+                        window.loadIssuesList();
                         window.loadClaudePrompts();
                     }, 1000);
                     
@@ -125,12 +126,15 @@
                     loginBtn.style.display = 'inline-block';
                     logoutBtn.style.display = 'none';
                     
-                    // ログアウト時にやらかしリストとClaudeプロンプトをクリア
+                    // ログアウト時にやらかしリスト、課題リスト、Claudeプロンプトをクリア
                     yarakashiList = [];
+                    issuesList = [];
                     claudePrompts = [];
                     window.yarakashiList = yarakashiList;
+                    window.issuesList = issuesList;
                     window.claudePrompts = claudePrompts;
                     displayYarakashiList();
+                    displayIssuesList();
                     displayClaudePrompts();
                 }
             }
@@ -1748,7 +1752,7 @@
 </head>
 <body>
     <div class="container">
-        <div class="version-badge">v1.0 [GitHub Pages Public]</div>
+        <div class="version-badge">v1.1 [Issues Management]</div>
         <div class="header">
             <h1>📋 統合管理アプリ</h1>
             
@@ -1767,6 +1771,9 @@
             <div class="tab-menu" style="margin-top: 15px;">
                 <button class="tab-button" data-tab="yarakashi" onclick="switchTab('yarakashi')">
                     🚨 やらかしリスト
+                </button>
+                <button class="tab-button" data-tab="issues" onclick="switchTab('issues')">
+                    📋 課題リスト
                 </button>
                 <button class="tab-button" data-tab="novel-ai" onclick="switchTab('novel-ai')">
                     🎨 Novel AI
@@ -1825,6 +1832,59 @@
 
                 <div id="yarakashi-list" style="max-height: none; overflow: visible;">
                     <!-- やらかしリストがここに表示される -->
+                </div>
+            </div>
+        </div>
+
+        <!-- 📋 課題リストタブ -->
+        <div id="issues-tab" class="tab-content" style="display: none;">
+            <div class="issues-section">
+                <div style="background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 20px;">
+                    <h3>📋 新しい課題を追加</h3>
+                    <div style="margin-bottom: 15px;">
+                        <label for="issue-title" style="display: block; font-weight: 600; margin-bottom: 5px;">タイトル:</label>
+                        <input type="text" id="issue-title" placeholder="課題の概要を入力" style="width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 6px;">
+                    </div>
+                    <div style="margin-bottom: 15px;">
+                        <label for="issue-priority" style="display: block; font-weight: 600; margin-bottom: 5px;">優先度:</label>
+                        <select id="issue-priority" style="width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 6px;">
+                            <option value="high">🔥 高</option>
+                            <option value="medium">📋 中</option>
+                            <option value="low">💤 低</option>
+                        </select>
+                    </div>
+                    <div style="margin-bottom: 15px;">
+                        <label for="issue-project" style="display: block; font-weight: 600; margin-bottom: 5px;">プロジェクト:</label>
+                        <select id="issue-project" style="width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 6px;">
+                            <option value="novel-ai">🎨 Novel AI Manager</option>
+                            <option value="yarakashi">🚨 やらかし管理</option>
+                            <option value="claude-code">💻 Claude Code</option>
+                            <option value="other">🔧 その他</option>
+                        </select>
+                    </div>
+                    <div style="margin-bottom: 15px;">
+                        <label for="issue-content" style="display: block; font-weight: 600; margin-bottom: 5px;">詳細:</label>
+                        <textarea id="issue-content" placeholder="課題の詳細、解決方法の提案など" rows="5" style="width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 6px; resize: vertical;"></textarea>
+                    </div>
+                    <div style="text-align: center;">
+                        <button onclick="addIssue()" style="background: #2196F3; color: white; padding: 12px 24px; border: none; border-radius: 6px; font-size: 16px; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
+                            📋 課題を追加
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- 🔍 課題検索機能 -->
+                <div style="margin-bottom: 15px;">
+                    <input type="text" id="issue-search" placeholder="🔍 課題を検索（タイトル・内容・プロジェクト）" 
+                           style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px;"
+                           oninput="filterIssueList()">
+                    <div style="margin-top: 5px; font-size: 12px; color: #666;">
+                        <span id="issue-search-result">全 <span id="issue-total-count">0</span> 件</span>
+                    </div>
+                </div>
+
+                <div id="issue-list" style="max-height: none; overflow: visible;">
+                    <!-- 課題リストがここに表示される -->
                 </div>
             </div>
         </div>
@@ -3145,6 +3205,209 @@
                 console.log('✅ Claude Codeタブ追加完了');
             }
         });
+        
+        // 📋 課題リスト管理機能
+        let issuesList = [];
+        window.issuesList = issuesList;
+        
+        window.addIssue = async function() {
+            try {
+                const title = document.getElementById('issue-title').value.trim();
+                const priority = document.getElementById('issue-priority').value;
+                const project = document.getElementById('issue-project').value;
+                const content = document.getElementById('issue-content').value.trim();
+                
+                if (!title || !content) {
+                    alert('タイトルと詳細を入力してください');
+                    return;
+                }
+                
+                const issue = {
+                    id: `issue_${Date.now()}_${Math.floor(Math.random() * 10000)}`,
+                    title: title,
+                    priority: priority,
+                    project: project,
+                    content: content,
+                    status: 'open',
+                    timestamp: new Date().toISOString()
+                };
+                
+                if (window.firebaseTest && window.firebaseTest.getCurrentUser()) {
+                    const user = window.firebaseTest.getCurrentUser();
+                    const issueRef = window.firebaseTest.ref(window.firebaseTest.database, `users/${user.uid}/issues_list/${issue.id}`);
+                    await window.firebaseTest.set(issueRef, issue);
+                }
+                
+                issuesList.push(issue);
+                displayIssuesList();
+                
+                // フォームクリア
+                document.getElementById('issue-title').value = '';
+                document.getElementById('issue-content').value = '';
+                
+                console.log('✅ 課題追加完了:', issue.title);
+                alert('✅ 課題を追加しました！');
+                
+            } catch (error) {
+                console.error('❌ 課題追加エラー:', error.message);
+                alert('❌ 課題追加エラー: ' + error.message);
+            }
+        };
+        
+        window.loadIssuesList = async function() {
+            try {
+                if (!window.firebaseTest || !window.firebaseTest.getCurrentUser()) {
+                    console.log('⚠️ Firebase未接続または未ログイン - 課題リスト読み込みスキップ');
+                    return;
+                }
+                
+                console.log('📖 課題リスト読み込み開始');
+                const user = window.firebaseTest.getCurrentUser();
+                const issuesRef = window.firebaseTest.ref(window.firebaseTest.database, `users/${user.uid}/issues_list`);
+                const snapshot = await window.firebaseTest.get(issuesRef);
+                
+                if (snapshot.exists()) {
+                    const data = snapshot.val();
+                    issuesList = Object.values(data).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+                    window.issuesList = issuesList;
+                    console.log('✅ 課題リスト読み込み成功:', issuesList.length, '件');
+                } else {
+                    issuesList = [];
+                    window.issuesList = issuesList;
+                    console.log('📭 課題リストなし');
+                }
+                
+                displayIssuesList();
+                
+            } catch (error) {
+                console.error('❌ 課題リスト読み込みエラー:', error.message);
+            }
+        };
+        
+        // 課題リスト表示機能とその他のヘルパー関数
+        function displayIssuesList(searchQuery = '') {
+            console.log('🖼️ displayIssuesList開始');
+            
+            const listContainer = document.getElementById('issue-list');
+            if (!listContainer) return;
+            
+            // 🔍 検索フィルタリング
+            let filteredIssuesList = searchQuery ? 
+                issuesList.filter(issue => 
+                    issue.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    issue.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    issue.project.toLowerCase().includes(searchQuery.toLowerCase())
+                ) : [...issuesList];
+            
+            if (filteredIssuesList.length === 0) {
+                listContainer.innerHTML = searchQuery ? 
+                    `<div style="text-align: center; padding: 20px; color: #666;">「${searchQuery}」に一致する課題が見つかりません</div>` :
+                    '<div style="text-align: center; padding: 20px; color: #666;">課題リストは空です</div>';
+                return;
+            }
+            
+            const priorityColors = { 'high': '#f44336', 'medium': '#FF9800', 'low': '#4CAF50' };
+            const priorityLabels = { 'high': '🔥 高', 'medium': '📋 中', 'low': '💤 低' };
+            const projectLabels = { 'novel-ai': '🎨 Novel AI', 'yarakashi': '🚨 やらかし管理', 'claude-code': '💻 Claude Code', 'other': '🔧 その他' };
+            
+            const html = filteredIssuesList.map(issue => {
+                const escapeHtml = (text) => text.replace(/[&<>"'`]/g, char => `&#${char.charCodeAt(0)};`);
+                const firstLine = issue.content.split('\n')[0];
+                const statusButton = issue.status === 'open' ? 
+                    `<button onclick="resolveIssue('${issue.id}')" style="background: #4CAF50; color: white; padding: 5px 10px; border: none; border-radius: 4px; cursor: pointer;">完了</button>` : 
+                    `<button onclick="reopenIssue('${issue.id}')" style="background: #FF9800; color: white; padding: 5px 10px; border: none; border-radius: 4px; cursor: pointer;">再オープン</button>`;
+                
+                return `<div class="issue-item" style="background: white; border-radius: 10px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-left: 4px solid ${priorityColors[issue.priority]};">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <div style="font-size: 1.1rem; font-weight: 600; color: #333;">${escapeHtml(issue.title)}</div>
+                        <div style="font-size: 11px; color: #999;">${issue.content.split('\n').length}行 | ${issue.content.length}文字</div>
+                    </div>
+                    <div style="font-size: 14px; color: #666; margin-bottom: 8px;">
+                        📅 ${new Date(issue.timestamp).toLocaleDateString('ja-JP')} 
+                        ${priorityLabels[issue.priority]} | ${projectLabels[issue.project]}
+                        ${issue.status === 'closed' ? '✅ 完了済み' : '🔄 オープン'}
+                    </div>
+                    <div style="color: #666; font-size: 14px; margin: 8px 0;">
+                        ${escapeHtml(firstLine)}${issue.content.split('\n').length > 1 ? ' ...' : ''}
+                    </div>
+                    <div style="margin-top: 10px;">
+                        <button onclick="toggleIssueContent('${issue.id}')" style="background: #2196F3; color: white; padding: 5px 10px; border: none; border-radius: 4px; cursor: pointer; margin-right: 5px;">
+                            <span id="toggle-text-${issue.id}">詳細表示</span>
+                        </button>
+                        ${statusButton}
+                        <button onclick="deleteIssue('${issue.id}')" style="background: #f44336; color: white; padding: 5px 10px; border: none; border-radius: 4px; cursor: pointer; margin-left: 5px;">削除</button>
+                    </div>
+                    <div id="full-content-${issue.id}" style="display: none; margin-top: 10px; padding: 10px; background: #f9f9f9; border-radius: 6px; font-size: 14px;">
+                        ${escapeHtml(issue.content).replace(/\n/g, '<br>')}
+                    </div>
+                </div>`;
+            }).join('');
+            
+            listContainer.innerHTML = html;
+        }
+        
+        window.filterIssueList = function() {
+            const searchInput = document.getElementById('issue-search');
+            const searchQuery = searchInput ? searchInput.value.trim() : '';
+            displayIssuesList(searchQuery);
+        };
+        
+        window.toggleIssueContent = function(itemId) {
+            const fullContentElement = document.getElementById(`full-content-${itemId}`);
+            const toggleTextElement = document.getElementById(`toggle-text-${itemId}`);
+            
+            if (fullContentElement && toggleTextElement) {
+                const isHidden = fullContentElement.style.display === 'none';
+                fullContentElement.style.display = isHidden ? 'block' : 'none';
+                toggleTextElement.textContent = isHidden ? '詳細非表示' : '詳細表示';
+            }
+        };
+        
+        window.resolveIssue = async function(id) { await updateIssueStatus(id, 'closed'); };
+        window.reopenIssue = async function(id) { await updateIssueStatus(id, 'open'); };
+        
+        async function updateIssueStatus(id, status) {
+            try {
+                const issue = issuesList.find(i => i.id == id);
+                if (!issue) return;
+                
+                issue.status = status;
+                
+                if (window.firebaseTest && window.firebaseTest.getCurrentUser()) {
+                    const user = window.firebaseTest.getCurrentUser();
+                    const issueRef = window.firebaseTest.ref(window.firebaseTest.database, `users/${user.uid}/issues_list/${id}`);
+                    await window.firebaseTest.set(issueRef, issue);
+                }
+                
+                displayIssuesList();
+                console.log('✅ 課題ステータス更新:', status);
+                
+            } catch (error) {
+                console.error('❌ 課題ステータス更新エラー:', error.message);
+                alert('❌ ステータス更新エラー: ' + error.message);
+            }
+        }
+        
+        window.deleteIssue = async function(id) {
+            if (!confirm('この課題を削除してもよろしいですか？')) return;
+            
+            try {
+                if (window.firebaseTest && window.firebaseTest.getCurrentUser()) {
+                    const user = window.firebaseTest.getCurrentUser();
+                    const issueRef = window.firebaseTest.ref(window.firebaseTest.database, `users/${user.uid}/issues_list/${id}`);
+                    await window.firebaseTest.set(issueRef, null);
+                }
+                
+                issuesList = issuesList.filter(i => i.id !== id);
+                window.issuesList = issuesList;
+                displayIssuesList();
+                console.log('✅ 課題削除完了');
+                
+            } catch (error) {
+                console.error('❌ 課題削除エラー:', error.message);
+                alert('❌ 削除エラー: ' + error.message);
+            }
+        };
         
         // Claude Code プロンプト管理機能
         let claudePrompts = [];
