@@ -183,6 +183,7 @@
             // 全てのタブコンテンツを非表示
             document.querySelectorAll('.tab-content').forEach(tab => {
                 tab.classList.remove('active');
+                tab.style.display = 'none';
             });
             
             // 全てのタブボタンを非アクティブ
@@ -196,6 +197,7 @@
             
             if (targetTab && targetButton) {
                 targetTab.classList.add('active');
+                targetTab.style.display = 'block';
                 targetButton.classList.add('active');
                 
                 // タブ状態をlocalStorageに保存
@@ -204,6 +206,8 @@
                 console.log(`✅ ${tabName}タブに切り替え完了`);
             } else {
                 console.error(`❌ タブ要素が見つかりません: ${tabName}`);
+                console.log('🔍 利用可能なタブ:', Array.from(document.querySelectorAll('[id$="-tab"]')).map(t => t.id));
+                console.log('🔍 利用可能なボタン:', Array.from(document.querySelectorAll('[data-tab]')).map(b => b.getAttribute('data-tab')));
             }
         };
         
@@ -1752,7 +1756,7 @@
 </head>
 <body>
     <div class="container">
-        <div class="version-badge">v1.1 [Issues Management]</div>
+        <div class="version-badge">v1.1.1 [Tab Display Fix]</div>
         <div class="header">
             <h1>📋 統合管理アプリ</h1>
             
@@ -1837,7 +1841,7 @@
         </div>
 
         <!-- 📋 課題リストタブ -->
-        <div id="issues-tab" class="tab-content" style="display: none;">
+        <div id="issues-tab" class="tab-content">
             <div class="issues-section">
                 <div style="background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 20px;">
                     <h3>📋 新しい課題を追加</h3>
