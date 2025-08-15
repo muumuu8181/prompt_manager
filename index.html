@@ -1756,7 +1756,7 @@
 </head>
 <body>
     <div class="container">
-        <div class="version-badge">v1.2 [Search Functions]</div>
+        <div class="version-badge">v1.2.1 [Search Bugfix]</div>
         <div class="header">
             <h1>📋 統合管理アプリ</h1>
             
@@ -3506,6 +3506,7 @@
             
             console.log('🔍 listContainer:', listContainer);
             console.log('🔍 claudePrompts.length:', claudePrompts.length);
+            console.log('🔍 claudePrompts構造:', claudePrompts.map(p => ({ id: p.id, hasContent: !!p.content, hasCategory: !!p.category, keys: Object.keys(p) })));
             
             if (!listContainer) {
                 console.error('❌ claude-prompt-list要素が見つかりません');
@@ -3514,10 +3515,14 @@
             
             // 🔍 検索フィルタリング
             let filteredPrompts = searchQuery ? 
-                claudePrompts.filter(prompt => 
-                    prompt.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                    prompt.category.toLowerCase().includes(searchQuery.toLowerCase())
-                ) : [...claudePrompts];
+                claudePrompts.filter(prompt => {
+                    // null/undefined チェック
+                    const content = prompt.content || '';
+                    const category = prompt.category || '';
+                    console.log('🔍 検索対象:', { content: content.substring(0, 50), category });
+                    return content.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                           category.toLowerCase().includes(searchQuery.toLowerCase());
+                }) : [...claudePrompts];
             
             // 📊 検索結果表示更新
             if (totalCountElement) totalCountElement.textContent = filteredPrompts.length;
