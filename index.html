@@ -1756,7 +1756,7 @@
 </head>
 <body>
     <div class="container">
-        <div class="version-badge">v1.1.1 [Tab Display Fix]</div>
+        <div class="version-badge">v1.1.2 [UX Improvements]</div>
         <div class="header">
             <h1>📋 統合管理アプリ</h1>
             
@@ -3200,6 +3200,16 @@
                         </button>
                     </div>
                     
+                    <!-- 🔍 Claude プロンプト検索機能 -->
+                    <div style="margin-bottom: 15px;">
+                        <input type="text" id="claude-search" placeholder="🔍 Claude プロンプトを検索（内容・カテゴリ）" 
+                               style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px;"
+                               oninput="filterClaudePrompts()">
+                        <div style="margin-top: 5px; font-size: 12px; color: #666;">
+                            <span id="claude-search-result">全 <span id="claude-total-count">0</span> 件</span>
+                        </div>
+                    </div>
+                    
                     <div id="claude-prompt-list" style="min-height: 200px;">
                         <!-- Claude Codeプロンプト一覧がここに表示される -->
                     </div>
@@ -3250,7 +3260,6 @@
                 document.getElementById('issue-content').value = '';
                 
                 console.log('✅ 課題追加完了:', issue.title);
-                alert('✅ 課題を追加しました！');
                 
             } catch (error) {
                 console.error('❌ 課題追加エラー:', error.message);
@@ -3485,16 +3494,37 @@
             }
         };
         
-        function displayClaudePrompts() {
+        function displayClaudePrompts(searchQuery = '') {
             const listContainer = document.getElementById('claude-prompt-list');
+            const totalCountElement = document.getElementById('claude-total-count');
+            const searchResultElement = document.getElementById('claude-search-result');
+            
             if (!listContainer) return;
             
-            if (claudePrompts.length === 0) {
-                listContainer.innerHTML = '<div style="text-align: center; padding: 20px; color: #666;">Claude Codeプロンプトリストは空です</div>';
+            // 🔍 検索フィルタリング
+            let filteredPrompts = searchQuery ? 
+                claudePrompts.filter(prompt => 
+                    prompt.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    prompt.category.toLowerCase().includes(searchQuery.toLowerCase())
+                ) : [...claudePrompts];
+            
+            // 📊 検索結果表示更新
+            if (totalCountElement) totalCountElement.textContent = filteredPrompts.length;
+            if (searchResultElement) {
+                searchResultElement.innerHTML = searchQuery ? 
+                    `検索結果: <span style="color: #7B68EE; font-weight: bold;">${filteredPrompts.length}</span> 件 / 全 ${claudePrompts.length} 件` :
+                    `全 <span id="claude-total-count">${claudePrompts.length}</span> 件`;
+            }
+            
+            if (filteredPrompts.length === 0) {
+                const message = searchQuery ? 
+                    `<div style="text-align: center; padding: 20px; color: #666;">「${searchQuery}」に一致するプロンプトが見つかりません</div>` :
+                    '<div style="text-align: center; padding: 20px; color: #666;">Claude Codeプロンプトリストは空です</div>';
+                listContainer.innerHTML = message;
                 return;
             }
             
-            const html = claudePrompts.map(prompt => `
+            const html = filteredPrompts.map(prompt => `
                 <div style="background: white; border-radius: 10px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-left: 4px solid #7B68EE;">
                     <div style="display: flex; justify-content: between; align-items: center; margin-bottom: 10px;">
                         <span style="background: #7B68EE; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.8em;">${prompt.category}</span>
@@ -3510,6 +3540,13 @@
             
             listContainer.innerHTML = html;
         }
+        
+        // 🔍 Claude プロンプト検索フィルタリング機能
+        window.filterClaudePrompts = function() {
+            const searchInput = document.getElementById('claude-search');
+            const searchQuery = searchInput ? searchInput.value.trim() : '';
+            displayClaudePrompts(searchQuery);
+        };
         
         window.copyClaudePrompt = async function(id) {
             const prompt = claudePrompts.find(p => p.id == id);
