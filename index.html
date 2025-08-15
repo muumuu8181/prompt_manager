@@ -1756,7 +1756,7 @@
 </head>
 <body>
     <div class="container">
-        <div class="version-badge">v1.1.2 [UX Improvements]</div>
+        <div class="version-badge">v1.2 [Search Functions]</div>
         <div class="header">
             <h1>📋 統合管理アプリ</h1>
             
@@ -3202,10 +3202,14 @@
                     
                     <!-- 🔍 Claude プロンプト検索機能 -->
                     <div style="margin-bottom: 15px;">
-                        <input type="text" id="claude-search" placeholder="🔍 Claude プロンプトを検索（内容・カテゴリ）" 
-                               style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px;"
-                               oninput="filterClaudePrompts()">
-                        <div style="margin-top: 5px; font-size: 12px; color: #666;">
+                        <div style="display: flex; gap: 10px; margin-bottom: 5px;">
+                            <input type="text" id="claude-search" placeholder="🔍 Claude プロンプトを検索（内容・カテゴリ）" 
+                                   style="flex: 1; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px;"
+                                   oninput="filterClaudePrompts()" onkeypress="if(event.key==='Enter') filterClaudePrompts()">
+                            <button onclick="filterClaudePrompts()" style="background: #7B68EE; color: white; padding: 10px 15px; border: none; border-radius: 8px; cursor: pointer;">🔍 検索</button>
+                            <button onclick="clearClaudeSearch()" style="background: #666; color: white; padding: 10px 15px; border: none; border-radius: 8px; cursor: pointer;">クリア</button>
+                        </div>
+                        <div style="font-size: 12px; color: #666;">
                             <span id="claude-search-result">全 <span id="claude-total-count">0</span> 件</span>
                         </div>
                     </div>
@@ -3495,11 +3499,18 @@
         };
         
         function displayClaudePrompts(searchQuery = '') {
+            console.log('🖼️ displayClaudePrompts開始, searchQuery:', searchQuery);
             const listContainer = document.getElementById('claude-prompt-list');
             const totalCountElement = document.getElementById('claude-total-count');
             const searchResultElement = document.getElementById('claude-search-result');
             
-            if (!listContainer) return;
+            console.log('🔍 listContainer:', listContainer);
+            console.log('🔍 claudePrompts.length:', claudePrompts.length);
+            
+            if (!listContainer) {
+                console.error('❌ claude-prompt-list要素が見つかりません');
+                return;
+            }
             
             // 🔍 検索フィルタリング
             let filteredPrompts = searchQuery ? 
@@ -3543,9 +3554,21 @@
         
         // 🔍 Claude プロンプト検索フィルタリング機能
         window.filterClaudePrompts = function() {
+            console.log('🔍 filterClaudePrompts実行開始');
             const searchInput = document.getElementById('claude-search');
             const searchQuery = searchInput ? searchInput.value.trim() : '';
+            console.log('🔍 検索クエリ:', searchQuery);
+            console.log('🔍 Claude プロンプト総数:', claudePrompts.length);
             displayClaudePrompts(searchQuery);
+        };
+        
+        // 検索クリア機能
+        window.clearClaudeSearch = function() {
+            const searchInput = document.getElementById('claude-search');
+            if (searchInput) {
+                searchInput.value = '';
+                displayClaudePrompts('');
+            }
         };
         
         window.copyClaudePrompt = async function(id) {
