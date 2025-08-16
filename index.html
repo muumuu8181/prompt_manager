@@ -1764,7 +1764,7 @@
 </head>
 <body>
     <div class="container">
-        <div class="version-badge">v1.3.0 [Universal Search]</div>
+        <div class="version-badge">v1.2.2 [Universal Search]</div>
         <div class="header">
             <h1>📋 統合管理アプリ</h1>
             
@@ -2266,7 +2266,7 @@
         }
 
         // プロンプトの保存
-        function savePrompt(mode = 'new') {
+        async function savePrompt(mode = 'new') {
             debugLog(`=== プロンプト保存開始 ===`, 'info');
             debugLog(`保存モード: ${mode}`, 'info');
             
@@ -2337,7 +2337,7 @@
             debugLog(`タグをグローバルセットに追加: [${Array.from(currentTags).join(', ')}]`, 'info');
             
             debugLog('savePrompts()呼び出し前のプロンプト数: ' + prompts.length, 'info');
-            savePrompts();
+            await savePrompts();
             debugLog('savePrompts()呼び出し後のプロンプト数: ' + prompts.length, 'info');
             
             clearInputs();
@@ -3041,18 +3041,40 @@
             showNotification('全てのプロンプトを削除しました');
         }
 
-        // データの保存（localStorage）
-        function savePrompts() {
+        // データの保存（localStorage + Firebase統合）
+        async function savePrompts() {
             const saveData = {
                 prompts: prompts,
                 tags: Array.from(allTags)
             };
-            debugLog(`localStorage保存実行: プロンプト${prompts.length}件、タグ${allTags.size}個`, 'info');
+            debugLog(`統合保存実行: プロンプト${prompts.length}件、タグ${allTags.size}個`, 'info');
+            
+            // 1. localStorage保存（バックアップ）
             try {
                 localStorage.setItem('novel_ai_prompts', JSON.stringify(saveData));
                 debugLog('localStorage保存成功', 'success');
             } catch (err) {
                 debugLog('localStorage保存エラー: ' + err.message, 'error');
+            }
+            
+            // 2. Firebase保存（メイン）
+            try {
+                if (window.firebaseTest && window.firebaseTest.getCurrentUser()) {
+                    const user = window.firebaseTest.getCurrentUser();
+                    
+                    // 各プロンプトを個別に保存
+                    for (const prompt of prompts) {
+                        const promptRef = window.firebaseTest.ref(window.firebaseTest.database, `users/${user.uid}/novel_ai_prompts/${prompt.id}`);
+                        await window.firebaseTest.set(promptRef, prompt);
+                    }
+                    
+                    debugLog('Firebase保存成功: ' + prompts.length + '件', 'success');
+                } else {
+                    debugLog('⚠️ Firebase未接続または未ログイン - Firebase保存スキップ', 'info');
+                }
+            } catch (error) {
+                debugLog('Firebase保存エラー: ' + error.message, 'error');
+                console.error('❌ Firebase保存エラー:', error.message);
             }
         }
 
