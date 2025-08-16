@@ -3152,6 +3152,13 @@
             });
             
             debugLog(`=== Novel AIプロンプト読み込み完了: ${prompts.length}件 ===`, 'success');
+            debugLog(`データ統合結果: Firebase=${firebasePrompts.length}件, localStorage=${localPrompts.length}件`, 'info');
+            console.log('🔍 NOVEL AI DEBUG:', {
+                firebaseCount: firebasePrompts.length,
+                localStorageCount: localPrompts.length,
+                finalCount: prompts.length,
+                user: window.firebaseTest?.getCurrentUser()?.email
+            });
         }
 
         // 日時のフォーマット
