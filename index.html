@@ -220,6 +220,23 @@
             }, 500);
         });
         
+        // 🔍 共通検索関数（車輪の再発明解消）
+        window.universalSearch = function(dataArray, searchQuery, searchFields) {
+            if (!searchQuery || !searchQuery.trim()) {
+                return [...dataArray];
+            }
+            
+            const query = searchQuery.trim().toLowerCase();
+            console.log(`🔍 共通検索実行: "${query}" in fields:`, searchFields);
+            
+            return dataArray.filter(item => 
+                searchFields.some(field => {
+                    const value = item[field] || '';
+                    return value.toString().toLowerCase().includes(query);
+                })
+            );
+        };
+        
         // やらかしリスト管理機能
         let yarakashiList = [];
         window.yarakashiList = yarakashiList;
@@ -316,17 +333,8 @@
                 return;
             }
             
-            // 🔍 検索フィルタリング
-            if (searchQuery) {
-                const query = searchQuery.toLowerCase();
-                filteredYarakashiList = yarakashiList.filter(yarakashi => 
-                    yarakashi.title.toLowerCase().includes(query) ||
-                    yarakashi.content.toLowerCase().includes(query) ||
-                    yarakashi.category.toLowerCase().includes(query)
-                );
-            } else {
-                filteredYarakashiList = [...yarakashiList];
-            }
+            // 🔍 検索フィルタリング（共通関数使用）
+            filteredYarakashiList = window.universalSearch(yarakashiList, searchQuery, ['title', 'content', 'category']);
             
             // 📊 検索結果表示更新
             if (totalCountElement) totalCountElement.textContent = filteredYarakashiList.length;
@@ -2057,8 +2065,8 @@
         let debugLogs = []; // デバッグログ保存用
 
         // ページ読み込み時の初期化
-        window.onload = function() {
-            loadPrompts();
+        window.onload = async function() {
+            await loadPrompts();
             displayPrompts();
             updateStats();
             updateTagsDisplay();
@@ -3049,53 +3057,79 @@
         }
 
         // データの読み込み（localStorage）
-        function loadPrompts() {
-            debugLog('=== localStorage読み込み開始 ===', 'info');
+        // Novel AIプロンプト読み込み（localStorage + Firebase統合）
+        async function loadPrompts() {
+            debugLog('=== Novel AIプロンプト読み込み開始 ===', 'info');
+            
+            // 1. localStorage読み込み
+            let localPrompts = [];
             const saved = localStorage.getItem('novel_ai_prompts');
             if (saved) {
                 debugLog('localStorage からデータ発見', 'info');
                 try {
                     const data = JSON.parse(saved);
-                    
                     if (data.prompts) {
-                        prompts = data.prompts;
-                        debugLog(`プロンプト読み込み: ${prompts.length}件`, 'success');
-                        // 日時の文字列をDateオブジェクトに変換
-                        prompts.forEach(prompt => {
-                            if (typeof prompt.timestamp === 'string') {
-                                prompt.timestamp = new Date(prompt.timestamp);
-                            }
-                            // 古いデータ構造との互換性
-                            if (!prompt.character1) {
-                                prompt.character1 = '';
-                                prompt.character2 = '';
-                                prompt.character3to6 = '';
-                                prompt.mainPrompt = prompt.content || '';
-                            }
-                            if (!prompt.tags) {
-                                prompt.tags = [];
-                            }
-                            // タイトルフィールドの追加（V0.21以降）
-                            if (!prompt.title) {
-                                prompt.title = prompt.mainPrompt ? 
-                                    truncateText(prompt.mainPrompt, 30) : '無題';
-                            }
-                        });
+                        localPrompts = data.prompts;
+                        debugLog(`localStorage プロンプト読み込み: ${localPrompts.length}件`, 'success');
                     }
-                    
                     if (data.tags) {
                         allTags = new Set(data.tags);
                     }
                 } catch (err) {
-                    console.error('データの読み込みに失敗しました:', err);
+                    console.error('localStorage読み込みエラー:', err);
                     debugLog('localStorage読み込みエラー: ' + err.message, 'error');
-                    prompts = [];
-                    allTags = new Set();
                 }
-            } else {
-                debugLog('localStorage にデータなし（初回起動）', 'info');
             }
-            debugLog('=== localStorage読み込み終了 ===', 'info');
+            
+            // 2. Firebase読み込み
+            let firebasePrompts = [];
+            try {
+                if (window.firebaseTest && window.firebaseTest.getCurrentUser()) {
+                    const user = window.firebaseTest.getCurrentUser();
+                    const promptsRef = window.firebaseTest.ref(window.firebaseTest.database, `users/${user.uid}/novel_ai_prompts`);
+                    const snapshot = await window.firebaseTest.get(promptsRef);
+                    
+                    if (snapshot.exists()) {
+                        const data = snapshot.val();
+                        firebasePrompts = Object.values(data).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+                        debugLog(`Firebase プロンプト読み込み: ${firebasePrompts.length}件`, 'success');
+                    } else {
+                        debugLog('Firebase にデータなし', 'info');
+                    }
+                } else {
+                    debugLog('⚠️ Firebase未接続または未ログイン - Novel AI読み込みスキップ', 'info');
+                }
+            } catch (error) {
+                console.error('❌ Firebase読み込みエラー:', error.message);
+                debugLog('Firebase読み込みエラー: ' + error.message, 'error');
+            }
+            
+            // 3. データ統合（Firebase優先、localStorageはバックアップ）
+            prompts = firebasePrompts.length > 0 ? firebasePrompts : localPrompts;
+            
+            // 4. データ構造の正規化
+            prompts.forEach(prompt => {
+                if (typeof prompt.timestamp === 'string') {
+                    prompt.timestamp = new Date(prompt.timestamp);
+                }
+                // 古いデータ構造との互換性
+                if (!prompt.character1) {
+                    prompt.character1 = '';
+                    prompt.character2 = '';
+                    prompt.character3to6 = '';
+                    prompt.mainPrompt = prompt.content || '';
+                }
+                if (!prompt.tags) {
+                    prompt.tags = [];
+                }
+                // タイトルフィールドの追加（V0.21以降）
+                if (!prompt.title) {
+                    prompt.title = prompt.mainPrompt ? 
+                        truncateText(prompt.mainPrompt, 30) : '無題';
+                }
+            });
+            
+            debugLog(`=== Novel AIプロンプト読み込み完了: ${prompts.length}件 ===`, 'success');
         }
 
         // 日時のフォーマット
@@ -3308,13 +3342,8 @@
             const listContainer = document.getElementById('issue-list');
             if (!listContainer) return;
             
-            // 🔍 検索フィルタリング
-            let filteredIssuesList = searchQuery ? 
-                issuesList.filter(issue => 
-                    issue.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                    issue.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                    issue.project.toLowerCase().includes(searchQuery.toLowerCase())
-                ) : [...issuesList];
+            // 🔍 検索フィルタリング（共通関数使用）
+            let filteredIssuesList = window.universalSearch(issuesList, searchQuery, ['title', 'content', 'project']);
             
             if (filteredIssuesList.length === 0) {
                 listContainer.innerHTML = searchQuery ? 
@@ -3513,16 +3542,8 @@
                 return;
             }
             
-            // 🔍 検索フィルタリング
-            let filteredPrompts = searchQuery ? 
-                claudePrompts.filter(prompt => {
-                    // null/undefined チェック (修正：promptフィールドを検索)
-                    const content = prompt.prompt || '';
-                    const category = prompt.category || '';
-                    console.log('🔍 検索対象:', { content: content.substring(0, 50), category });
-                    return content.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                           category.toLowerCase().includes(searchQuery.toLowerCase());
-                }) : [...claudePrompts];
+            // 🔍 検索フィルタリング（共通関数使用）
+            let filteredPrompts = window.universalSearch(claudePrompts, searchQuery, ['prompt', 'category']);
             
             // 📊 検索結果表示更新
             if (totalCountElement) totalCountElement.textContent = filteredPrompts.length;
