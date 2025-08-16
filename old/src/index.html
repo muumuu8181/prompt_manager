@@ -3,16 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Novel AI プロンプト管理アプリ [Firebase Test Mode]</title>
+    <title>Novel AI プロンプト管理アプリ</title>
     
-    <!-- 🔥 Firebase Test Integration - Phase 1-2 -->
+    <!-- Firebase SDK v9 -->
     <script type="module">
-        // Firebase SDK読み込み（テスト用）
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js';
-        import { getDatabase, ref, onValue, set, push, get } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js';
+        import { getDatabase, ref, push, onValue, set, remove } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js';
         import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js';
 
-        // Firebase設定（前任者から継承）
+        // Firebase設定
         const firebaseConfig = {
             apiKey: "AIzaSyA5PXKChizYDCXF_GJ4KL6Ylq9K5hCPXWE",
             authDomain: "shares-b1b97.firebaseapp.com",
@@ -23,624 +22,15 @@
             appId: "1:38311063248:web:0d2d5726d12b305b24b8d5"
         };
 
-        console.log('🔥 Firebase Test Phase 1-2 開始');
-        console.log('🌐 Protocol:', window.location.protocol);
-        console.log('🌐 Host:', window.location.host);
-        
-        try {
-            // Firebase初期化テスト
-            const app = initializeApp(firebaseConfig);
-            const database = getDatabase(app);
-            const auth = getAuth(app);
-            const googleProvider = new GoogleAuthProvider();
-            
-            console.log('✅ Firebase SDK初期化成功');
-            console.log('✅ Database接続準備完了');
-            console.log('✅ Auth接続準備完了');
-            
-            // Phase1-3: 認証状態監視（テスト用）
-            let currentUser = null;
-            onAuthStateChanged(auth, (user) => {
-                if (user) {
-                    console.log('🔐 ユーザーログイン確認:', user.email);
-                    currentUser = user;
-                    window.updateAuthUI(true);
-                } else {
-                    console.log('🔐 ユーザーログアウト状態');
-                    currentUser = null;
-                    window.updateAuthUI(false);
-                }
-            });
-            
-            // グローバルアクセス用（テスト用のみ）
-            window.firebaseTest = {
-                app,
-                database,
-                auth,
-                googleProvider,
-                ref,
-                set,
-                get,
-                signIn: () => signInWithPopup(auth, googleProvider),
-                signOut: () => signOut(auth),
-                getCurrentUser: () => currentUser,
-                // Phase1-4: 簡単なDB操作関数追加（修正版：Firebase UIDを使用）
-                saveTestData: async (data) => {
-                    if (!currentUser) {
-                        throw new Error('ログインが必要です');
-                    }
-                    const userId = currentUser.uid; // UID使用に変更
-                    const testRef = ref(database, `users/${userId}/novel_ai_prompts/test_data`);
-                    await set(testRef, {
-                        ...data,
-                        timestamp: new Date().toISOString(),
-                        userEmail: currentUser.email,
-                        userId: currentUser.uid
-                    });
-                },
-                loadTestData: async () => {
-                    if (!currentUser) {
-                        throw new Error('ログインが必要です');
-                    }
-                    const userId = currentUser.uid; // UID使用に変更
-                    const testRef = ref(database, `users/${userId}/novel_ai_prompts/test_data`);
-                    const snapshot = await get(testRef);
-                    return snapshot.exists() ? snapshot.val() : null;
-                },
-                initialized: true,
-                phase: 'Phase1-4',
-                safeMode: true
-            };
-            
-            console.log('🔥 Firebase Test Phase1-4 - DB読み書きテスト準備完了。');
-            console.log('⚠️  注意: メインアプリはまだlocalStorageを使用中（Firebaseデータは表示されません）');
-            
-        } catch (error) {
-            console.error('❌ Firebase初期化エラー:', error);
-            window.firebaseTest = { error: error.message, initialized: false };
-        }
-        
-        // Phase1-3: UI更新関数（グローバルスコープ）
-        window.updateAuthUI = function(isLoggedIn) {
-            const authStatus = document.getElementById('auth-status');
-            const loginBtn = document.getElementById('login-btn');
-            const logoutBtn = document.getElementById('logout-btn');
-            
-            if (authStatus && loginBtn && logoutBtn) {
-                if (isLoggedIn) {
-                    authStatus.textContent = `✅ ログイン中: ${window.firebaseTest.getCurrentUser().email}`;
-                    authStatus.style.color = 'green';
-                    loginBtn.style.display = 'none';
-                    logoutBtn.style.display = 'inline-block';
-                    
-                    // ログイン時にやらかしリスト、課題リスト、Claude プロンプトを自動読み込み
-                    setTimeout(() => {
-                        window.loadYarakashiList();
-                        window.loadIssuesList();
-                        window.loadClaudePrompts();
-                    }, 1000);
-                    
-                } else {
-                    authStatus.textContent = '🔐 ログアウト状態';
-                    authStatus.style.color = 'orange';
-                    loginBtn.style.display = 'inline-block';
-                    logoutBtn.style.display = 'none';
-                    
-                    // ログアウト時にやらかしリスト、課題リスト、Claudeプロンプトをクリア
-                    yarakashiList = [];
-                    issuesList = [];
-                    claudePrompts = [];
-                    window.yarakashiList = yarakashiList;
-                    window.issuesList = issuesList;
-                    window.claudePrompts = claudePrompts;
-                    displayYarakashiList();
-                    displayIssuesList();
-                    displayClaudePrompts();
-                }
-            }
-        }
-        
-        // Phase1-3: 認証テスト関数（グローバルスコープ）
-        window.testLogin = async function() {
-            try {
-                console.log('🔐 Google認証テスト開始');
-                
-                // Protocol確認
-                if (window.location.protocol === 'file:') {
-                    console.log('⚠️  file://プロトコルで実行中');
-                    alert('⚠️ Firebase認証にはHTTP/HTTPSが必要です\n\n次の手順をお試しください:\n1. Windowsでコマンドプロンプトを開く\n2. テストフォルダに移動\n3. python -m http.server 8083\n4. http://localhost:8083/test.html でアクセス');
-                    return;
-                }
-                
-                await window.firebaseTest.signIn();
-                console.log('✅ ログイン成功');
-            } catch (error) {
-                console.error('❌ ログインエラー:', error.message);
-                if (error.message.includes('auth/unauthorized-domain')) {
-                    alert('🔧 Firebase設定でドメインの承認が必要です。\n現在のドメイン: ' + window.location.origin);
-                } else {
-                    alert('ログインエラー: ' + error.message);
-                }
-            }
-        };
-        
-        window.testLogout = async function() {
-            try {
-                console.log('🔐 ログアウトテスト開始');
-                await window.firebaseTest.signOut();
-                console.log('✅ ログアウト成功');
-            } catch (error) {
-                console.error('❌ ログアウトエラー:', error.message);
-            }
-        };
-        
-        // タブ切り替え機能（状態記憶付き）
-        let currentTab = localStorage.getItem('currentTab') || 'yarakashi';
-        
-        window.switchTab = function(tabName) {
-            console.log(`🔄 タブ切り替え: ${currentTab} → ${tabName}`);
-            
-            // 全てのタブコンテンツを非表示
-            document.querySelectorAll('.tab-content').forEach(tab => {
-                tab.classList.remove('active');
-                tab.style.display = 'none';
-            });
-            
-            // 全てのタブボタンを非アクティブ
-            document.querySelectorAll('.tab-button').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            
-            // 指定されたタブをアクティブ
-            const targetTab = document.getElementById(`${tabName}-tab`);
-            const targetButton = document.querySelector(`[data-tab="${tabName}"]`);
-            
-            if (targetTab && targetButton) {
-                targetTab.classList.add('active');
-                targetTab.style.display = 'block';
-                targetButton.classList.add('active');
-                
-                // タブ状態をlocalStorageに保存
-                localStorage.setItem('currentTab', tabName);
-                currentTab = tabName;
-                console.log(`✅ ${tabName}タブに切り替え完了`);
-            } else {
-                console.error(`❌ タブ要素が見つかりません: ${tabName}`);
-                console.log('🔍 利用可能なタブ:', Array.from(document.querySelectorAll('[id$="-tab"]')).map(t => t.id));
-                console.log('🔍 利用可能なボタン:', Array.from(document.querySelectorAll('[data-tab]')).map(b => b.getAttribute('data-tab')));
-            }
-        };
-        
-        // ページ読み込み時に前回のタブを復元
-        window.addEventListener('DOMContentLoaded', function() {
-            setTimeout(() => {
-                const savedTab = localStorage.getItem('currentTab') || 'yarakashi';
-                console.log(`🔄 タブ状態復元: ${savedTab}`);
-                window.switchTab(savedTab);
-            }, 500);
-        });
-        
-        // やらかしリスト管理機能
-        let yarakashiList = [];
-        window.yarakashiList = yarakashiList;
-        
-        window.addYarakashi = async function() {
-            try {
-                const title = document.getElementById('yarakashi-title').value.trim();
-                const category = document.getElementById('yarakashi-category').value;
-                const content = document.getElementById('yarakashi-content').value.trim();
-                
-                if (!title || !content) {
-                    alert('タイトルと詳細内容を入力してください');
-                    return;
-                }
-                
-                const yarakashi = {
-                    id: `yarakashi_${Date.now()}_${Math.floor(Math.random() * 10000)}`,
-                    title,
-                    category,
-                    content,
-                    timestamp: new Date().toISOString(),
-                    resolved: false
-                };
-                
-                console.log('🚨 やらかし追加開始:', yarakashi.title);
-                
-                if (window.firebaseTest && window.firebaseTest.getCurrentUser()) {
-                    const user = window.firebaseTest.getCurrentUser();
-                    const yarakashiRef = window.firebaseTest.ref(window.firebaseTest.database, `users/${user.uid}/yarakashi_list/${yarakashi.id}`);
-                    await window.firebaseTest.set(yarakashiRef, yarakashi);
-                    console.log('✅ Firebase保存成功');
-                }
-                
-                yarakashiList.push(yarakashi);
-                
-                // フォームをクリア
-                document.getElementById('yarakashi-title').value = '';
-                document.getElementById('yarakashi-content').value = '';
-                
-                displayYarakashiList();
-                console.log('✅ やらかし追加完了');
-                
-            } catch (error) {
-                console.error('❌ やらかし追加エラー:', error.message);
-                alert('エラー: ' + error.message);
-            }
-        };
-        
-        window.loadYarakashiList = async function() {
-            try {
-                if (!window.firebaseTest || !window.firebaseTest.getCurrentUser()) {
-                    console.log('⚠️  ログインしていません');
-                    return;
-                }
-                
-                console.log('📖 やらかしリスト読み込み開始');
-                const user = window.firebaseTest.getCurrentUser();
-                const yarakashiRef = window.firebaseTest.ref(window.firebaseTest.database, `users/${user.uid}/yarakashi_list`);
-                const snapshot = await window.firebaseTest.get(yarakashiRef);
-                
-                if (snapshot.exists()) {
-                    const data = snapshot.val();
-                    yarakashiList = Object.values(data).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-                    window.yarakashiList = yarakashiList; // グローバル同期
-                    console.log('✅ やらかしリスト読み込み成功:', yarakashiList.length, '件');
-                    console.log('🔍 読み込みデータ:', yarakashiList.map(y => y.title));
-                } else {
-                    yarakashiList = [];
-                    window.yarakashiList = yarakashiList;
-                    console.log('📭 やらかしリストなし');
-                }
-                
-                displayYarakashiList();
-                
-            } catch (error) {
-                console.error('❌ やらかしリスト読み込みエラー:', error.message);
-            }
-        };
-        
-        // 🔍 フィルタリング用の変数
-        let filteredYarakashiList = [...yarakashiList];
-        
-        function displayYarakashiList(searchQuery = '') {
-            console.log('🖼️  displayYarakashiList開始');
-            console.log('🔍 yarakashiList.length:', yarakashiList.length);
-            console.log('🔍 searchQuery:', searchQuery);
-            
-            const listContainer = document.getElementById('yarakashi-list');
-            const totalCountElement = document.getElementById('total-count');
-            const searchResultElement = document.getElementById('yarakashi-search-result');
-            
-            if (!listContainer) {
-                console.error('❌ yarakashi-list要素が見つかりません');
-                return;
-            }
-            
-            // 🔍 検索フィルタリング
-            if (searchQuery) {
-                const query = searchQuery.toLowerCase();
-                filteredYarakashiList = yarakashiList.filter(yarakashi => 
-                    yarakashi.title.toLowerCase().includes(query) ||
-                    yarakashi.content.toLowerCase().includes(query) ||
-                    yarakashi.category.toLowerCase().includes(query)
-                );
-            } else {
-                filteredYarakashiList = [...yarakashiList];
-            }
-            
-            // 📊 検索結果表示更新
-            if (totalCountElement) totalCountElement.textContent = filteredYarakashiList.length;
-            if (searchResultElement) {
-                searchResultElement.innerHTML = searchQuery ? 
-                    `検索結果: <span style="color: #2196F3; font-weight: bold;">${filteredYarakashiList.length}</span> 件 / 全 ${yarakashiList.length} 件` :
-                    `全 <span id="total-count">${yarakashiList.length}</span> 件`;
-            }
-            
-            if (filteredYarakashiList.length === 0) {
-                const message = searchQuery ? 
-                    `<div style="text-align: center; padding: 20px; color: #666;">「${searchQuery}」に一致するやらかしが見つかりません</div>` :
-                    '<div style="text-align: center; padding: 20px; color: #666;">やらかしリストは空です</div>';
-                listContainer.innerHTML = message;
-                return;
-            }
-            
-            console.log('🔄 HTML生成開始...');
-            const html = filteredYarakashiList.map((yarakashi, index) => {
-                console.log(`🔍 [${index}] ID: ${yarakashi.id}, Title: ${yarakashi.title}`);
-                
-                const resolveButton = !yarakashi.resolved ? 
-                    `<button onclick="resolveYarakashi('${yarakashi.id}')" style="background: #4CAF50; color: white; padding: 5px 10px; border: none; border-radius: 4px; cursor: pointer;">解決済みにする</button>` : 
-                    `<button onclick="unresolveYarakashi('${yarakashi.id}')" style="background: #FF9800; color: white; padding: 5px 10px; border: none; border-radius: 4px; cursor: pointer;">未解決に戻す</button>`;
-                
-                // HTMLエスケープ処理
-                const escapeHtml = (text) => {
-                    return text.replace(/&/g, '&amp;')
-                              .replace(/</g, '&lt;')
-                              .replace(/>/g, '&gt;')
-                              .replace(/"/g, '&quot;')
-                              .replace(/'/g, '&#39;')
-                              .replace(/`/g, '&#96;');
-                };
-                
-                const safeTitle = escapeHtml(yarakashi.title);
-                const safeCategory = escapeHtml(yarakashi.category);
-                
-                // 📊 コンテンツ統計計算
-                const contentLines = yarakashi.content.split('\n').length;
-                const contentChars = yarakashi.content.length;
-                const firstLine = yarakashi.content.split('\n')[0];
-                const safeFirstLine = escapeHtml(firstLine);
-                
-                // 🔍 コンパクト表示用の要素ID
-                const itemId = yarakashi.id;
-                
-                return `<div class="yarakashi-item ${yarakashi.resolved ? 'resolved' : ''}" data-id="${yarakashi.id}">
-                    <div class="yarakashi-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                        <div class="yarakashi-title">${safeTitle}</div>
-                        <div class="yarakashi-stats" style="font-size: 11px; color: #999; white-space: nowrap;">
-                            📝 ${contentLines}行 | ${contentChars}文字
-                        </div>
-                    </div>
-                    <div class="yarakashi-meta">
-                        📅 ${new Date(yarakashi.timestamp).toLocaleDateString('ja-JP')} 
-                        📂 ${safeCategory}
-                        ${yarakashi.resolved ? '✅ 解決済み' : '🚨 未解決'}
-                    </div>
-                    <div class="yarakashi-preview" style="color: #666; font-size: 14px; margin: 8px 0;">
-                        ${safeFirstLine}${contentLines > 1 ? ' ...' : ''}
-                    </div>
-                    <div class="yarakashi-actions" style="margin-top: 10px;">
-                        <button onclick="toggleYarakashiContent('${itemId}')" style="background: #2196F3; color: white; padding: 5px 10px; border: none; border-radius: 4px; cursor: pointer; margin-right: 5px;">
-                            <span id="toggle-text-${itemId}">詳細表示</span>
-                        </button>
-                        ${resolveButton}
-                        <button onclick="deleteYarakashi('${yarakashi.id}')" style="background: #f44336; color: white; padding: 5px 10px; border: none; border-radius: 4px; cursor: pointer; margin-left: 5px;">削除</button>
-                    </div>
-                    <div id="full-content-${itemId}" class="yarakashi-full-content" style="display: none; margin-top: 10px; padding: 10px; background: #f9f9f9; border-radius: 6px; font-size: 14px;">
-                        ${escapeHtml(yarakashi.content).replace(/\n/g, '<br>')}
-                    </div>
-                </div>`;
-            }).join('');
-            
-            console.log('🔍 生成されたHTML文字数:', html.length);
-            console.log('🔍 HTML preview:', html.substring(0, 200) + '...');
-            console.log('🔍 Full HTML:', html);
-            
-            listContainer.innerHTML = html;
-            console.log('✅ innerHTML設定完了');
-            
-            // DOM更新後の確認
-            setTimeout(() => {
-                const renderedItems = document.querySelectorAll('.yarakashi-item');
-                console.log('✅ 実際に描画されたアイテム数:', renderedItems.length);
-                console.log('🔍 描画されたアイテム:', Array.from(renderedItems).map(item => item.dataset.id));
-                
-                // より詳細なDOM確認
-                const listContainer = document.getElementById('yarakashi-list');
-                console.log('🔍 listContainer.children.length:', listContainer.children.length);
-                console.log('🔍 listContainer.innerHTML.length:', listContainer.innerHTML.length);
-                console.log('🔍 listContainer styles:', window.getComputedStyle(listContainer));
-                
-                // 個別アイテムの確認
-                for (let i = 0; i < renderedItems.length; i++) {
-                    const item = renderedItems[i];
-                    console.log(`🔍 Item ${i}:`, {
-                        id: item.dataset.id,
-                        display: window.getComputedStyle(item).display,
-                        visibility: window.getComputedStyle(item).visibility,
-                        height: window.getComputedStyle(item).height,
-                        overflow: window.getComputedStyle(item).overflow
-                    });
-                }
-            }, 100);
-        }
-        
-        // 🔍 検索フィルタリング機能
-        window.filterYarakashiList = function() {
-            const searchInput = document.getElementById('yarakashi-search');
-            const searchQuery = searchInput ? searchInput.value.trim() : '';
-            displayYarakashiList(searchQuery);
-        };
-        
-        // 📋 詳細表示トグル機能
-        window.toggleYarakashiContent = function(itemId) {
-            const fullContentElement = document.getElementById(`full-content-${itemId}`);
-            const toggleTextElement = document.getElementById(`toggle-text-${itemId}`);
-            
-            if (!fullContentElement || !toggleTextElement) return;
-            
-            const isHidden = fullContentElement.style.display === 'none';
-            
-            if (isHidden) {
-                fullContentElement.style.display = 'block';
-                toggleTextElement.textContent = '詳細非表示';
-            } else {
-                fullContentElement.style.display = 'none';
-                toggleTextElement.textContent = '詳細表示';
-            }
-        };
-        
-        window.resolveYarakashi = async function(id) {
-            await updateYarakashiStatus(id, true);
-        };
-        
-        window.unresolveYarakashi = async function(id) {
-            await updateYarakashiStatus(id, false);
-        };
-        
-        async function updateYarakashiStatus(id, resolved) {
-            try {
-                const yarakashi = yarakashiList.find(y => y.id == id);
-                if (!yarakashi) return;
-                
-                yarakashi.resolved = resolved;
-                
-                if (window.firebaseTest && window.firebaseTest.getCurrentUser()) {
-                    const user = window.firebaseTest.getCurrentUser();
-                    const yarakashiRef = window.firebaseTest.ref(window.firebaseTest.database, `users/${user.uid}/yarakashi_list/${id}`);
-                    await window.firebaseTest.set(yarakashiRef, yarakashi);
-                }
-                
-                displayYarakashiList();
-                console.log(`✅ やらかし ${resolved ? '解決' : '未解決'}:`, yarakashi.title);
-                
-            } catch (error) {
-                console.error('❌ やらかし状態更新エラー:', error.message);
-            }
-        }
-        
-        window.deleteYarakashi = async function(id) {
-            if (!confirm('このやらかしを削除しますか？')) return;
-            
-            try {
-                yarakashiList = yarakashiList.filter(y => y.id != id);
-                
-                if (window.firebaseTest && window.firebaseTest.getCurrentUser()) {
-                    const user = window.firebaseTest.getCurrentUser();
-                    const yarakashiRef = window.firebaseTest.ref(window.firebaseTest.database, `users/${user.uid}/yarakashi_list/${id}`);
-                    await window.firebaseTest.set(yarakashiRef, null); // Firebaseで削除
-                }
-                
-                displayYarakashiList();
-                console.log('✅ やらかし削除完了');
-                
-            } catch (error) {
-                console.error('❌ やらかし削除エラー:', error.message);
-            }
-        };
-        
-        window.clearAllYarakashi = async function() {
-            if (!confirm('全てのやらかしを削除しますか？この操作は取り消せません。')) return;
-            
-            try {
-                console.log('🗑️  全やらかし削除開始');
-                
-                if (window.firebaseTest && window.firebaseTest.getCurrentUser()) {
-                    const user = window.firebaseTest.getCurrentUser();
-                    const yarakashiListRef = window.firebaseTest.ref(window.firebaseTest.database, `users/${user.uid}/yarakashi_list`);
-                    await window.firebaseTest.set(yarakashiListRef, null); // Firebase全削除
-                    console.log('✅ Firebase全削除完了');
-                }
-                
-                yarakashiList = [];
-                window.yarakashiList = yarakashiList;
-                displayYarakashiList();
-                console.log('✅ 全やらかし削除完了');
-                alert('✅ 全てのやらかしを削除しました');
-                
-            } catch (error) {
-                console.error('❌ 全削除エラー:', error.message);
-                alert('❌ 削除エラー: ' + error.message);
-            }
-        };
-        
-        window.addSampleYarakashi = async function() {
-            const samples = [
-                {
-                    title: 'Firebase認証でauth.emailを使用してPERMISSION_DENIED発生',
-                    category: 'firebase',
-                    content: 'Firebase Realtime Databaseのルールが `$uid === auth.uid` なのに、コードで `auth.email` を使用。結果：全てのDB操作でPERMISSION_DENIEDエラー。\n\n修正方法：\n- `auth.email` → `auth.uid` に変更\n- パスも `users/{uid}/` 形式に統一'
-                },
-                {
-                    title: 'ES6モジュールスコープでグローバル関数が未定義',
-                    category: 'ui',
-                    content: '`<script type="module">` 内で定義した関数がonclick属性から呼び出せない。`ReferenceError: testLogin is not defined`\n\n修正方法：\n```javascript\n// ❌ ES6モジュール内の関数は外部からアクセス不可\nfunction testLogin() { ... }\n\n// ✅ windowオブジェクトに明示的に追加\nwindow.testLogin = async function() { ... };\n```'
-                },
-                {
-                    title: 'Firebase IDで小数点を含むIDを使用してパスエラー',
-                    category: 'database',
-                    content: '`Date.now() + Math.random()` で生成したIDに小数点が含まれてFirebaseパスエラー。\n\n修正方法：\n```javascript\n// ❌ 小数点含む\nid: Date.now() + Math.random()\n\n// ✅ 文字列ID\nid: `yarakashi_${Date.now()}_${Math.floor(Math.random() * 10000)}`\n```'
-                }
-            ];
-            
-            for (const sample of samples) {
-                const yarakashi = {
-                    id: `sample_${Date.now()}_${Math.floor(Math.random() * 10000)}`,
-                    title: sample.title,
-                    category: sample.category,
-                    content: sample.content,
-                    timestamp: new Date().toISOString(),
-                    resolved: false
-                };
-                
-                if (window.firebaseTest && window.firebaseTest.getCurrentUser()) {
-                    const user = window.firebaseTest.getCurrentUser();
-                    const yarakashiRef = window.firebaseTest.ref(window.firebaseTest.database, `users/${user.uid}/yarakashi_list/${yarakashi.id}`);
-                    await window.firebaseTest.set(yarakashiRef, yarakashi);
-                }
-                
-                yarakashiList.push(yarakashi);
-                
-                // 少し待つ（IDの重複防止）
-                await new Promise(resolve => setTimeout(resolve, 100));
-            }
-            
-            displayYarakashiList();
-            console.log('✅ サンプルやらかし追加完了:', samples.length, '件');
-            alert(`✅ ${samples.length}件のサンプルやらかしを追加しました！`);
-        };
-        
-        // Phase1-4: 簡単なDB読み書きテスト関数
-        window.saveSimpleTest = async function() {
-            try {
-                console.log('💾 Firebase保存テスト開始');
-                const user = window.firebaseTest.getCurrentUser();
-                console.log('🔍 認証ユーザー:', user);
-                console.log('🔍 Firebase UID:', user.uid);
-                console.log('🔍 ユーザーEmail:', user.email);
-                
-                const testData = {
-                    message: "Hello Firebase!",
-                    test_number: Math.floor(Math.random() * 1000),
-                    phase: "Phase1-4"
-                };
-                
-                // 正しいパスでテスト
-                console.log('🔍 保存先パス:', `users/${user.uid}/novel_ai_prompts/test_data`);
-                
-                await window.firebaseTest.saveTestData(testData);
-                console.log('✅ Firebase保存成功:', testData);
-                alert(`✅ Firebase保存成功!\n番号: ${testData.test_number}`);
-                
-            } catch (error) {
-                console.error('❌ Firebase保存エラー:', error.message);
-                console.error('❌ エラー詳細:', error);
-                
-                // 他のパスでテスト試行
-                console.log('🔄 別パスでテスト試行');
-                try {
-                    const { database, ref, set } = window.firebaseTest;
-                    const testRef = ref(database, 'debug_test');
-                    await set(testRef, { test: 'hello', time: Date.now() });
-                    console.log('✅ ルートパス書き込み成功');
-                } catch (rootError) {
-                    console.error('❌ ルートパスも失敗:', rootError.message);
-                }
-                
-                alert('❌ 保存エラー: ' + error.message + '\n詳細はコンソールを確認');
-            }
-        };
-        
-        window.loadSimpleTest = async function() {
-            try {
-                console.log('📖 Firebase読み込みテスト開始');
-                const data = await window.firebaseTest.loadTestData();
-                
-                if (data) {
-                    console.log('✅ Firebase読み込み成功:', data);
-                    alert(`✅ Firebase読み込み成功!\n\nメッセージ: ${data.message}\n番号: ${data.test_number}\n保存日時: ${data.timestamp}`);
-                } else {
-                    console.log('📭 データなし');
-                    alert('📭 保存されたデータがありません\n先に「簡単テスト保存」を実行してください');
-                }
-                
-            } catch (error) {
-                console.error('❌ Firebase読み込みエラー:', error.message);
-                alert('❌ 読み込みエラー: ' + error.message);
-            }
-        };
+        // Firebase初期化
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+        const auth = getAuth(app);
+        const googleProvider = new GoogleAuthProvider();
+
+        // グローバルに公開
+        window.firebase = { database, auth, googleProvider, ref, push, onValue, set, remove, signInWithPopup, signOut, onAuthStateChanged };
     </script>
-    
     <style>
         * {
             margin: 0;
@@ -1681,223 +1071,230 @@
             }
         }
 
-        /* タブメニュー用CSS */
-        .tab-menu {
+        /* 認証関連スタイル */
+        .auth-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             display: flex;
-            gap: 5px;
-            background: rgba(255,255,255,0.1);
-            padding: 5px;
-            border-radius: 8px;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
         }
 
-        .tab-button {
-            flex: 1;
-            padding: 12px 16px;
-            border: none;
-            border-radius: 6px;
-            background: rgba(255,255,255,0.2);
+        .auth-card {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.2);
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+        }
+
+        .auth-title {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .auth-subtitle {
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .google-login-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            width: 100%;
+            padding: 15px 20px;
+            background: #4285f4;
             color: white;
-            font-size: 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s;
         }
 
-        .tab-button:hover {
-            background: rgba(255,255,255,0.3);
+        .google-login-btn:hover {
+            background: #3367d6;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(66, 133, 244, 0.4);
         }
 
-        .tab-button.active {
-            background: rgba(255,255,255,0.9);
-            color: #333;
-        }
-
-        /* タブコンテンツ */
-        .tab-content {
-            display: none;
-        }
-
-        .tab-content.active {
-            display: block;
-        }
-
-        /* やらかしリスト専用スタイル */
-        .yarakashi-item {
-            background: white;
-            border-radius: 10px;
-            padding: 15px;
-            margin-bottom: 15px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            border-left: 4px solid #f44336;
-        }
-
-        .yarakashi-item.resolved {
-            border-left-color: #4CAF50;
-        }
-
-        .yarakashi-title {
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: #333;
-            margin-bottom: 8px;
-        }
-
-        .yarakashi-meta {
-            font-size: 0.9rem;
-            color: #666;
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 15px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 20px;
             margin-bottom: 10px;
         }
 
-        .yarakashi-content {
-            line-height: 1.5;
-            color: #555;
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 2px solid rgba(255,255,255,0.3);
+        }
+
+        .user-name {
+            color: white;
+            font-weight: 600;
+            flex: 1;
+        }
+
+        .logout-btn {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.3);
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .logout-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        /* タブ機能のスタイル */
+        .tab-container {
+            display: flex;
+            margin-top: 20px;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .tab-button {
+            flex: 1;
+            padding: 15px 20px;
+            font-size: 16px;
+            font-weight: 600;
+            border: 2px solid rgba(255,255,255,0.3);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .tab-button:first-child {
+            border-right: 1px solid rgba(255,255,255,0.5);
+        }
+
+        /* Novel AI タブ（現在の色） */
+        .tab-button[data-mode="novelai"] {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .tab-button[data-mode="novelai"]:hover {
+            background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+        }
+
+        /* Claude Code タブ（オレンジ寄り茶色） */
+        .tab-button[data-mode="claudecode"] {
+            background: linear-gradient(135deg, #8B4513 0%, #D2691E 100%);
+            color: white;
+        }
+
+        .tab-button[data-mode="claudecode"]:hover {
+            background: linear-gradient(135deg, #7A3E0F 0%, #C0561A 100%);
+        }
+
+        /* アクティブなタブ - 大幅強調 */
+        .tab-button.active {
+            transform: translateY(-4px) scale(1.05);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+            border: 3px solid #FFD700 !important; /* 金色のボーダー */
+            position: relative;
+            z-index: 10;
+        }
+
+        /* アクティブタブに追加の装飾 */
+        .tab-button.active::before {
+            content: '✨';
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #FFD700;
+            color: #333;
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        /* 非アクティブなタブ - より明確な違い */
+        .tab-button:not(.active) {
+            opacity: 0.5;
+            filter: grayscale(30%);
+            transform: scale(0.95);
+        }
+
+        /* 非アクティブタブのホバー時 */
+        .tab-button:not(.active):hover {
+            opacity: 0.8;
+            filter: grayscale(0%);
+            transform: scale(1.0);
         }
     </style>
 </head>
 <body>
+    <!-- 認証オーバーレイ -->
+    <div id="authOverlay" class="auth-overlay" style="display: none;">
+        <div class="auth-card">
+            <h2 class="auth-title">🔐 ログインが必要です</h2>
+            <p class="auth-subtitle">プロンプトデータをクラウドに安全に保存するため、Googleアカウントでログインしてください</p>
+            <button id="googleLoginBtn" class="google-login-btn">
+                <svg width="18" height="18" viewBox="0 0 24 24">
+                    <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                    <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                    <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                    <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                </svg>
+                Googleでログイン
+            </button>
+        </div>
+    </div>
+
     <div class="container">
-        <div class="version-badge">v1.2.1 [Search Bugfix]</div>
+        <div class="version-badge">v0.8-Firebase</div>
         <div class="header">
-            <h1>📋 統合管理アプリ</h1>
-            
-            <!-- 認証エリア -->
-            <div style="margin-top: 15px; padding: 10px; background: rgba(255,255,255,0.1); border-radius: 8px;">
-                <p id="auth-status" style="margin-bottom: 8px; font-weight: bold;">🔐 認証状態確認中...</p>
-                <button id="login-btn" onclick="testLogin()" style="background: #4CAF50; color: white; padding: 8px 16px; border: none; border-radius: 4px; margin-right: 10px; display: none;">
-                    🔐 Googleでログイン
-                </button>
-                <button id="logout-btn" onclick="testLogout()" style="background: #f44336; color: white; padding: 8px 16px; border: none; border-radius: 4px; display: none;">
-                    🚪 ログアウト
-                </button>
+            <!-- ユーザー情報表示 -->
+            <div id="userInfo" class="user-info" style="display: none;">
+                <img id="userAvatar" class="user-avatar" src="" alt="ユーザーアバター">
+                <span id="userName" class="user-name"></span>
+                <button id="logoutBtn" class="logout-btn">ログアウト</button>
             </div>
-            
-            <!-- タブメニュー -->
-            <div class="tab-menu" style="margin-top: 15px;">
-                <button class="tab-button" data-tab="yarakashi" onclick="switchTab('yarakashi')">
-                    🚨 やらかしリスト
-                </button>
-                <button class="tab-button" data-tab="issues" onclick="switchTab('issues')">
-                    📋 課題リスト
-                </button>
-                <button class="tab-button" data-tab="novel-ai" onclick="switchTab('novel-ai')">
+            <h1>🎨 Novel AI プロンプト管理アプリ</h1>
+            <!-- タブ機能追加 -->
+            <div class="tab-container">
+                <button class="tab-button active" data-mode="novelai" onclick="switchMode('novelai')">
                     🎨 Novel AI
                 </button>
-                <button class="tab-button" data-tab="claude-code" onclick="switchTab('claude-code')">
+                <button class="tab-button" data-mode="claudecode" onclick="switchMode('claudecode')">
                     💻 Claude Code
                 </button>
             </div>
         </div>
 
-        <!-- やらかしリストタブ -->
-        <div id="yarakashi-tab" class="tab-content">
-            <div class="yarakashi-section">
-                <div style="background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 20px;">
-                    <h3>🚨 新しいやらかしを追加</h3>
-                    <div style="margin-bottom: 15px;">
-                        <label for="yarakashi-title" style="display: block; font-weight: 600; margin-bottom: 5px;">タイトル:</label>
-                        <input type="text" id="yarakashi-title" placeholder="やらかしの概要を入力" style="width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 6px;">
-                    </div>
-                    <div style="margin-bottom: 15px;">
-                        <label for="yarakashi-category" style="display: block; font-weight: 600; margin-bottom: 5px;">カテゴリ:</label>
-                        <select id="yarakashi-category" style="width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 6px;">
-                            <option value="firebase">Firebase</option>
-                            <option value="auth">認証</option>
-                            <option value="ui">UI/UX</option>
-                            <option value="database">データベース</option>
-                            <option value="other">その他</option>
-                        </select>
-                    </div>
-                    <div style="margin-bottom: 15px;">
-                        <label for="yarakashi-content" style="display: block; font-weight: 600; margin-bottom: 5px;">詳細内容:</label>
-                        <textarea id="yarakashi-content" rows="4" placeholder="やらかしの詳細、原因、解決方法を入力" style="width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 6px; resize: vertical;"></textarea>
-                    </div>
-                    <div style="display: flex; gap: 10px;">
-                        <button onclick="addYarakashi()" style="background: #f44336; color: white; padding: 12px 24px; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; flex: 1;">
-                            🚨 やらかし追加
-                        </button>
-                        <button onclick="clearAllYarakashi()" style="background: #FF5722; color: white; padding: 12px 16px; border: none; border-radius: 6px; font-weight: 600; cursor: pointer;">
-                            🗑️ 全削除
-                        </button>
-                        <button onclick="addSampleYarakashi()" style="background: #2196F3; color: white; padding: 12px 16px; border: none; border-radius: 6px; font-weight: 600; cursor: pointer;">
-                            📝 サンプル
-                        </button>
-                    </div>
-                </div>
-                
-                <!-- 🔍 やらかし検索機能 -->
-                <div style="margin-bottom: 15px;">
-                    <input type="text" id="yarakashi-search" placeholder="🔍 やらかしを検索（タイトル・内容・カテゴリ）" 
-                           style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px;"
-                           oninput="filterYarakashiList()">
-                    <div style="margin-top: 5px; font-size: 12px; color: #666;">
-                        <span id="yarakashi-search-result">全 <span id="total-count">0</span> 件</span>
-                    </div>
-                </div>
-
-                <div id="yarakashi-list" style="max-height: none; overflow: visible;">
-                    <!-- やらかしリストがここに表示される -->
-                </div>
-            </div>
-        </div>
-
-        <!-- 📋 課題リストタブ -->
-        <div id="issues-tab" class="tab-content">
-            <div class="issues-section">
-                <div style="background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 20px;">
-                    <h3>📋 新しい課題を追加</h3>
-                    <div style="margin-bottom: 15px;">
-                        <label for="issue-title" style="display: block; font-weight: 600; margin-bottom: 5px;">タイトル:</label>
-                        <input type="text" id="issue-title" placeholder="課題の概要を入力" style="width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 6px;">
-                    </div>
-                    <div style="margin-bottom: 15px;">
-                        <label for="issue-priority" style="display: block; font-weight: 600; margin-bottom: 5px;">優先度:</label>
-                        <select id="issue-priority" style="width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 6px;">
-                            <option value="high">🔥 高</option>
-                            <option value="medium">📋 中</option>
-                            <option value="low">💤 低</option>
-                        </select>
-                    </div>
-                    <div style="margin-bottom: 15px;">
-                        <label for="issue-project" style="display: block; font-weight: 600; margin-bottom: 5px;">プロジェクト:</label>
-                        <select id="issue-project" style="width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 6px;">
-                            <option value="novel-ai">🎨 Novel AI Manager</option>
-                            <option value="yarakashi">🚨 やらかし管理</option>
-                            <option value="claude-code">💻 Claude Code</option>
-                            <option value="other">🔧 その他</option>
-                        </select>
-                    </div>
-                    <div style="margin-bottom: 15px;">
-                        <label for="issue-content" style="display: block; font-weight: 600; margin-bottom: 5px;">詳細:</label>
-                        <textarea id="issue-content" placeholder="課題の詳細、解決方法の提案など" rows="5" style="width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 6px; resize: vertical;"></textarea>
-                    </div>
-                    <div style="text-align: center;">
-                        <button onclick="addIssue()" style="background: #2196F3; color: white; padding: 12px 24px; border: none; border-radius: 6px; font-size: 16px; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
-                            📋 課題を追加
-                        </button>
-                    </div>
-                </div>
-                
-                <!-- 🔍 課題検索機能 -->
-                <div style="margin-bottom: 15px;">
-                    <input type="text" id="issue-search" placeholder="🔍 課題を検索（タイトル・内容・プロジェクト）" 
-                           style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px;"
-                           oninput="filterIssueList()">
-                    <div style="margin-top: 5px; font-size: 12px; color: #666;">
-                        <span id="issue-search-result">全 <span id="issue-total-count">0</span> 件</span>
-                    </div>
-                </div>
-
-                <div id="issue-list" style="max-height: none; overflow: visible;">
-                    <!-- 課題リストがここに表示される -->
-                </div>
-            </div>
-        </div>
-
-        <!-- Novel AIタブ（既存機能） -->
-        <div id="novel-ai-tab" class="tab-content">
-            <div class="controls">
-                <!-- タイトル入力エリア -->
-                <div class="title-section">
+        <div class="controls">
+            <!-- タイトル入力エリア -->
+            <div class="title-section">
                 <div class="title-input-row">
                     <h3>📝 プロンプトタイトル</h3>
                     <input type="text" id="promptTitle" class="title-input" placeholder="プロンプトにタイトルを付けてください（例: 森の中の美少女、戦闘シーンなど）" maxlength="50">
@@ -1940,10 +1337,11 @@
             <div class="save-section">
                 <div class="save-and-clear-section">
                     <div class="save-buttons">
-                        <button onclick="savePrompt('new')" class="btn-primary btn-save">💾 新規保存</button>
+                        <button onclick="debugLog('🔥 STEP1: 保存ボタンがクリックされました!', 'info'); savePrompt('new')" class="btn-primary btn-save">💾 新規保存</button>
                         <button onclick="savePrompt('overwrite')" class="btn-secondary btn-save" id="overwriteBtn" style="display: none;">📝 上書き保存</button>
                     </div>
                     <button onclick="clearAllInputs()" class="btn-clear">🧹 クリア</button>
+                    <button onclick="resetLocalStorage()" class="btn-clear" style="background: red; color: white;">🚨 完全リセット</button>
                 </div>
                 
                 <!-- キーワード検索 -->
@@ -2030,6 +1428,7 @@
                 <button onclick="importData()" class="btn-info">📥 インポート</button>
                 <button onclick="clearAll()" class="btn-secondary">🗑️ 全削除</button>
                 <button onclick="toggleDebugPanel()" class="btn-info">🔍 デバッグ</button>
+                <button onclick="debugLog('テストボタンクリック: currentEditingId=' + currentEditingId + ', prompts.length=' + prompts.length, 'info')" class="btn-info">🧪 テスト</button>
             </div>
 
             <!-- デバッグパネル -->
@@ -2055,12 +1454,173 @@
         let excludeKeywords = new Set(); // 除外キーワード
         let currentEditingId = null; // 現在編集中のプロンプトID
         let debugLogs = []; // デバッグログ保存用
+        let currentMode = 'novelai'; // 現在のモード (novelai/claudecode)
+        
+        // Firebase関連変数
+        let currentUser = null;
+        let firebaseReady = false;
+
+        // Firebase認証関数
+        async function initializeAuth() {
+            try {
+                const { auth, onAuthStateChanged, signInWithPopup, signOut, googleProvider } = window.firebase;
+                
+                // 認証状態監視
+                onAuthStateChanged(auth, (user) => {
+                    currentUser = user;
+                    if (user) {
+                        showUserInfo(user);
+                        hideAuthOverlay();
+                        loadUserData();
+                    } else {
+                        showAuthOverlay();
+                        hideUserInfo();
+                    }
+                });
+                
+                // ログインボタンイベント
+                document.getElementById('googleLoginBtn').addEventListener('click', async () => {
+                    try {
+                        await signInWithPopup(auth, googleProvider);
+                    } catch (error) {
+                        console.error('ログインエラー:', error);
+                        alert('ログインに失敗しました: ' + error.message);
+                    }
+                });
+                
+                // ログアウトボタンイベント
+                document.getElementById('logoutBtn').addEventListener('click', async () => {
+                    try {
+                        await signOut(auth);
+                    } catch (error) {
+                        console.error('ログアウトエラー:', error);
+                    }
+                });
+                
+                firebaseReady = true;
+                debugLog('Firebase認証初期化完了', 'success');
+                
+            } catch (error) {
+                console.error('Firebase初期化エラー:', error);
+                debugLog('Firebase初期化エラー: ' + error.message, 'error');
+                // Firebaseが使えない場合はlocalStorageモードで動作
+                firebaseReady = false;
+                hideAuthOverlay();
+                loadPrompts(); // localStorage から読み込み
+            }
+        }
+        
+        function showAuthOverlay() {
+            document.getElementById('authOverlay').style.display = 'flex';
+        }
+        
+        function hideAuthOverlay() {
+            document.getElementById('authOverlay').style.display = 'none';
+        }
+        
+        function showUserInfo(user) {
+            const userInfo = document.getElementById('userInfo');
+            const userAvatar = document.getElementById('userAvatar');
+            const userName = document.getElementById('userName');
+            
+            userAvatar.src = user.photoURL || 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMTYiIGN5PSIxNiIgcj0iMTYiIGZpbGw9IiM2NjdlZWEiLz4KPHR0ZXh0IHg9IjUwJSIgeT0iNTAlIiBkb21pbmFudC1iYXNlbGluZT0iY2VudHJhbCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0id2hpdGUiIGZvbnQtc2l6ZT0iMTRweCIgZm9udC13ZWlnaHQ9ImJvbGQiPkEKPC90ZXh0Pgo8L3N2Zz4K';
+            userName.textContent = user.displayName || user.email;
+            userInfo.style.display = 'flex';
+        }
+        
+        function hideUserInfo() {
+            document.getElementById('userInfo').style.display = 'none';
+        }
+
+        // Firebase Realtime Database操作関数
+        async function loadUserData() {
+            if (!firebaseReady || !currentUser) {
+                debugLog('Firebase未準備またはユーザー未ログイン - localStorage使用', 'warning');
+                loadPrompts();
+                return;
+            }
+            
+            try {
+                const { database, ref, onValue } = window.firebase;
+                const userRef = ref(database, `users/${currentUser.uid}/prompts`);
+                
+                debugLog('=== Firebase読み込み開始 ===', 'info');
+                debugLog(`ユーザーID: ${currentUser.uid}`, 'info');
+                
+                onValue(userRef, (snapshot) => {
+                    const data = snapshot.val();
+                    if (data) {
+                        prompts = Object.values(data);
+                        // タグも復元
+                        allTags = new Set();
+                        prompts.forEach(prompt => {
+                            if (prompt.tags) {
+                                prompt.tags.forEach(tag => allTags.add(tag));
+                            }
+                            // 日時復元
+                            if (typeof prompt.timestamp === 'string') {
+                                prompt.timestamp = new Date(prompt.timestamp);
+                            }
+                        });
+                        debugLog(`🔥 Firebase読み込み完了: ${prompts.length}件`, 'success');
+                    } else {
+                        prompts = [];
+                        allTags = new Set();
+                        debugLog('Firebase: データなし（新規ユーザー）', 'info');
+                    }
+                    
+                    displayPrompts();
+                    updateStats();
+                    updateTagsDisplay();
+                }, (error) => {
+                    console.error('Firebase読み込みエラー:', error);
+                    debugLog('Firebase読み込みエラー - localStorage使用', 'error');
+                    loadPrompts(); // フォールバック
+                });
+                
+            } catch (error) {
+                console.error('Firebase操作エラー:', error);
+                debugLog('Firebase操作エラー - localStorage使用', 'error');
+                loadPrompts();
+            }
+        }
+        
+        async function saveUserData() {
+            if (!firebaseReady || !currentUser) {
+                debugLog('Firebase未準備 - localStorage保存', 'warning');
+                savePrompts();
+                return;
+            }
+            
+            try {
+                const { database, ref, set } = window.firebase;
+                const userRef = ref(database, `users/${currentUser.uid}/prompts`);
+                
+                // プロンプトをオブジェクト形式で保存（キーはプロンプトID）
+                const promptsObject = {};
+                prompts.forEach(prompt => {
+                    promptsObject[prompt.id] = prompt;
+                });
+                
+                await set(userRef, promptsObject);
+                debugLog(`🔥 Firebase保存完了: ${prompts.length}件`, 'success');
+                
+                // バックアップとしてlocalStorageにも保存
+                savePrompts();
+                
+            } catch (error) {
+                console.error('Firebase保存エラー:', error);
+                debugLog('Firebase保存エラー - localStorage保存', 'error');
+                savePrompts(); // フォールバック
+            }
+        }
 
         // ページ読み込み時の初期化
         window.onload = function() {
-            loadPrompts();
-            displayPrompts();
-            updateStats();
+            // Firebase初期化を最優先で実行
+            setTimeout(initializeAuth, 100); // Firebase SDKの読み込み待ち
+            
+            // UI初期化
             updateTagsDisplay();
             
             // イベントリスナー設定
@@ -2265,8 +1825,9 @@
             const title = document.getElementById('promptTitle').value.trim();
             const mainPrompt = document.getElementById('mainPrompt').value.trim();
             
-            debugLog(`タイトル: "${title}"`, 'info');
-            debugLog(`メインプロンプト: "${mainPrompt.substring(0, 50)}..."`, 'info');
+            debugLog(`🔥 STEP3: タイトル取得: "${title}" (長さ: ${title.length})`, 'info');
+            debugLog(`🔥 STEP3: メインプロンプト取得: "${mainPrompt}" (長さ: ${mainPrompt.length})`, 'info');
+            debugLog(`🔥 STEP3: mainPromptフィールド存在確認: ${document.getElementById('mainPrompt') ? 'あり' : 'なし'}`, 'info');
             
             if (!title) {
                 debugLog('タイトルが空のため保存中止', 'error');
@@ -2290,6 +1851,11 @@
                 timestamp: new Date(),
                 source: window.currentPotionData ? 'potion' : 'manual'
             };
+            
+            debugLog(`🔥 promptData作成後:`, 'info');
+            debugLog(`  - title: "${promptData.title}"`, 'info');
+            debugLog(`  - mainPrompt: "${promptData.mainPrompt}"`, 'info');
+            debugLog(`  - character1: "${promptData.character1}"`, 'info');
 
             // ポーション情報がある場合は追加
             if (window.currentPotionData) {
@@ -2303,24 +1869,42 @@
                 }
             }
 
+            debugLog(`保存処理開始: mode=${mode}, currentEditingId=${currentEditingId}`, 'info');
+            
             if (mode === 'overwrite' && currentEditingId) {
                 // 上書き保存
+                debugLog('上書き保存処理開始', 'info');
                 const index = prompts.findIndex(p => p.id == currentEditingId);
+                debugLog(`対象プロンプトのインデックス: ${index}`, 'info');
+                
                 if (index !== -1) {
+                    const oldPrompt = prompts[index];
+                    debugLog(`上書き対象: "${oldPrompt.title}"`, 'info');
+                    
                     promptData.id = currentEditingId;
                     promptData.originalTimestamp = prompts[index].timestamp; // 元の作成日時を保持
                     prompts[index] = promptData;
+                    
+                    debugLog('上書き保存完了', 'success');
                     showNotification('プロンプトを上書き保存しました！');
                 } else {
                     // 元のプロンプトが見つからない場合は新規保存
+                    debugLog(`❌ 上書き対象が見つからない（ID: ${currentEditingId}）、新規保存に変更`, 'warn');
                     promptData.id = Date.now();
                     prompts.unshift(promptData);
                     showNotification('プロンプトを新規保存しました！');
                 }
             } else {
                 // 新規保存
+                debugLog('新規保存処理実行', 'info');
                 promptData.id = Date.now();
                 prompts.unshift(promptData);
+                
+                debugLog(`🔥 配列追加後の最新プロンプト:`, 'info');
+                debugLog(`  - id: ${prompts[0].id}`, 'info');
+                debugLog(`  - title: "${prompts[0].title}"`, 'info');
+                debugLog(`  - mainPrompt: "${prompts[0].mainPrompt}"`, 'info');
+                
                 showNotification('プロンプトを新規保存しました！');
             }
             
@@ -2329,8 +1913,15 @@
             debugLog(`タグをグローバルセットに追加: [${Array.from(currentTags).join(', ')}]`, 'info');
             
             debugLog('savePrompts()呼び出し前のプロンプト数: ' + prompts.length, 'info');
-            savePrompts();
-            debugLog('savePrompts()呼び出し後のプロンプト数: ' + prompts.length, 'info');
+            
+            // Firebaseが利用可能ならFirebaseに保存、そうでなければlocalStorage
+            if (firebaseReady && currentUser) {
+                saveUserData();
+            } else {
+                savePrompts();
+            }
+            
+            debugLog('保存処理呼び出し後のプロンプト数: ' + prompts.length, 'info');
             
             clearInputs();
             displayPrompts();
@@ -2393,8 +1984,14 @@
 
         // プロンプトの表示
         function displayPrompts() {
+            debugLog(`=== displayPrompts開始 ===`, 'info');
+            debugLog(`prompts配列の件数: ${prompts.length}`, 'info');
+            debugLog(`prompts配列の内容: ${JSON.stringify(prompts.map(p => ({id: p.id, title: p.title}))).substring(0, 200)}`, 'info');
+            
             const container = document.getElementById('promptList');
             const filteredPrompts = filterPrompts();
+            
+            debugLog(`フィルター後の件数: ${filteredPrompts.length}`, 'info');
 
             if (filteredPrompts.length === 0) {
                 container.innerHTML = `
@@ -2407,30 +2004,86 @@
                 return;
             }
 
-            container.innerHTML = filteredPrompts.map(prompt => `
-                <div class="prompt-item">
-                    <div class="prompt-content-row">
-                        ${prompt.image ? `<div class="prompt-image-main"><img src="${prompt.image}" alt="${prompt.imageName || 'ポーション画像'}" class="prompt-main-image"></div>` : ''}
-                        <div class="prompt-info" onclick="restorePromptToInputs('${prompt.id}')" style="cursor: pointer;">
-                            <div class="prompt-meta">
-                                📅 ${formatDateTime(prompt.timestamp)} 
-                                ${prompt.source === 'clipboard' ? '📋' : prompt.source === 'file' ? '📁' : prompt.source === 'potion' ? '🧪' : '✏️'}
-                                ${prompt.tags.map(tag => `<span class="mini-tag">${tag}</span>`).join('')}
-                                ${prompt.potionName ? `<span class="mini-tag potion-name">🧪 ${prompt.potionName}</span>` : ''}
+            debugLog(`HTMLレンダリング開始: ${filteredPrompts.length}件`, 'info');
+            
+            // 画像データのサイズチェック
+            let totalImageSize = 0;
+            filteredPrompts.forEach((prompt, index) => {
+                if (prompt.image) {
+                    const imageSize = prompt.image.length;
+                    totalImageSize += imageSize;
+                    debugLog(`プロンプト${index + 1}の画像サイズ: ${Math.round(imageSize / 1024)}KB`, 'info');
+                }
+            });
+            debugLog(`総画像データサイズ: ${Math.round(totalImageSize / 1024)}KB`, 'info');
+            
+            try {
+                const htmlContent = filteredPrompts.map(prompt => `
+                    <div class="prompt-item">
+                        <div class="prompt-content-row">
+                            <div class="prompt-info" onclick="restorePromptToInputs(&quot;${prompt.id}&quot;)" style="cursor: pointer;">
+                                <div class="prompt-meta">
+                                    📅 ${formatDateTime(prompt.timestamp)} 
+                                    ${prompt.source === 'clipboard' ? '📋' : prompt.source === 'file' ? '📁' : prompt.source === 'potion' ? '🧪' : '✏️'}
+                                    ${prompt.tags.map(tag => `<span class="mini-tag">${tag}</span>`).join('')}
+                                    ${prompt.potionName ? `<span class="mini-tag potion-name">🧪 ${prompt.potionName}</span>` : ''}
+                                </div>
+                                <div class="prompt-title-line">
+                                    <strong>${highlightSearchKeywords(prompt.title || '無題')}</strong> - ${highlightSearchKeywords(truncateText(prompt.mainPrompt, 50))}
+                                </div>
                             </div>
-                            <div class="prompt-title-line">
-                                <strong>${highlightSearchKeywords(prompt.title || '無題')}</strong> - ${highlightSearchKeywords(truncateText(prompt.mainPrompt, 50))}
+                            <div class="prompt-actions">
+                                ${prompt.image ? `<button onclick="showImagePopup(&quot;${prompt.id}&quot;)" class="btn-image" title="画像を表示">🖼️</button>` : ''}
+                                <button onclick="deletePrompt(&quot;${prompt.id}&quot;)" class="btn-delete">🗑️</button>
                             </div>
-                        </div>
-                        <div class="prompt-actions">
-                            ${prompt.image ? `<div class="prompt-thumbnail"><img src="${prompt.image}" alt="${prompt.imageName || 'ポーション画像'}" class="thumbnail-image" title="${prompt.potionName || prompt.imageName || 'ポーション画像'}"></div>` : ''}
-                            <button onclick="deletePrompt('${prompt.id}')" class="btn-delete">🗑️</button>
                         </div>
                     </div>
-                </div>
-            `).join('');
+                `).join('');
+                
+                debugLog(`HTML文字列長: ${htmlContent.length}文字`, 'info');
+                container.innerHTML = htmlContent;
+                debugLog(`DOM更新完了`, 'success');
+                
+            } catch (error) {
+                debugLog(`HTMLレンダリングエラー: ${error.message}`, 'error');
+                debugLog(`エラー詳細: ${error.stack}`, 'error');
+            }
 
             updateStats();
+        }
+
+        // 画像ポップアップ表示
+        function showImagePopup(promptId) {
+            const prompt = prompts.find(p => p.id == promptId);
+            if (!prompt || !prompt.image) return;
+            
+            const popup = document.createElement('div');
+            popup.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.8);
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                z-index: 9999;
+                cursor: pointer;
+            `;
+            
+            const img = document.createElement('img');
+            img.src = prompt.image;
+            img.style.cssText = `
+                max-width: 90%;
+                max-height: 90%;
+                border-radius: 10px;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            `;
+            
+            popup.appendChild(img);
+            popup.onclick = () => popup.remove();
+            document.body.appendChild(popup);
         }
 
         // 保存済みプロンプトのコピー
@@ -2573,8 +2226,21 @@
             updatePotionPreview();
             updateSaveButtons();
             
+            // メインプロンプトを自動でクリップボードにコピー
+            if (prompt.mainPrompt) {
+                try {
+                    navigator.clipboard.writeText(prompt.mainPrompt).then(() => {
+                        debugLog(`メインプロンプトをクリップボードにコピー成功`, 'success');
+                    }).catch(err => {
+                        debugLog(`クリップボードコピーエラー: ${err}`, 'warning');
+                    });
+                } catch (err) {
+                    debugLog(`クリップボードAPIエラー: ${err}`, 'warning');
+                }
+            }
+            
             // 成功メッセージ
-            showNotification(`"${prompt.title || '無題'}" を編集モードで復元しました！${prompt.source === 'potion' ? ' 🧪' : ''}`);
+            showNotification(`"${prompt.title || '無題'}" を編集モードで復元しました！📋メインプロンプトをクリップボードにコピー${prompt.source === 'potion' ? ' 🧪' : ''}`);
             
             // 入力エリアまでスクロール
             document.querySelector('.title-section').scrollIntoView({ behavior: 'smooth' });
@@ -2602,7 +2268,14 @@
             if (!confirm('このプロンプトを削除しますか？')) return;
 
             prompts = prompts.filter(p => p.id != id);
-            savePrompts();
+            
+            // Firebaseが利用可能ならFirebaseに保存、そうでなければlocalStorage
+            if (firebaseReady && currentUser) {
+                saveUserData();
+            } else {
+                savePrompts();
+            }
+            
             displayPrompts();
             updateStats();
             
@@ -2758,6 +2431,11 @@
                 // 画像のみの場合は入力欄にプレビュー表示
                 if (potion.image && !potion.content) {
                     debugLog('画像のみのポーション検出: ' + baseName, 'info');
+                    
+                    // 既存の入力内容をチェック
+                    const existingTitle = document.getElementById('promptTitle').value.trim();
+                    const existingPrompt = document.getElementById('mainPrompt').value.trim();
+                    
                     window.currentPotionData = {
                         image: potion.image,
                         imageName: potion.imageName,
@@ -2765,6 +2443,15 @@
                     };
                     debugLog('currentPotionData設定完了', 'success');
                     debugLog('画像データ先頭確認: ' + potion.image.substring(0, 30) + '...', 'info');
+                    
+                    // 既存の入力がない場合のみタイトルを設定
+                    if (!existingTitle) {
+                        document.getElementById('promptTitle').value = baseName;
+                        debugLog('タイトルを自動設定: ' + baseName, 'info');
+                    } else {
+                        debugLog('既存タイトルを保持: ' + existingTitle, 'info');
+                    }
+                    
                     updatePotionPreview();
                     debugLog('updatePotionPreview呼び出し完了', 'success');
                 }
@@ -2776,14 +2463,24 @@
                 // ポーションタグをグローバルタグに追加
                 allTags.add('ポーション');
                 
-                // 最初のポーションを入力欄に自動設定してプレビュー表示
+                // 最初のポーションを入力欄に自動設定してプレビュー表示（既存の入力がない場合のみ）
                 if (processedCount === 1) {
                     debugLog('単一ポーションを入力欄に自動設定', 'info');
                     const firstPotionName = Object.keys(potionData)[0];
                     const firstPotion = potionData[firstPotionName];
                     
-                    document.getElementById('promptTitle').value = firstPotionName;
-                    document.getElementById('mainPrompt').value = firstPotion.content;
+                    // 既存の入力内容をチェック
+                    const existingTitle = document.getElementById('promptTitle').value.trim();
+                    const existingPrompt = document.getElementById('mainPrompt').value.trim();
+                    
+                    // 既存の入力がない場合のみ自動設定
+                    if (!existingTitle && !existingPrompt) {
+                        document.getElementById('promptTitle').value = firstPotionName;
+                        document.getElementById('mainPrompt').value = firstPotion.content;
+                        debugLog('入力欄が空のため自動設定を実行', 'info');
+                    } else {
+                        debugLog('既存の入力があるため自動設定をスキップ', 'info');
+                    }
                     
                     if (firstPotion.image) {
                         window.currentPotionData = {
@@ -2870,10 +2567,15 @@
         function updateSaveButtons() {
             const overwriteBtn = document.getElementById('overwriteBtn');
             
+            debugLog(`=== updateSaveButtons実行 ===`, 'info');
+            debugLog(`currentEditingId: ${currentEditingId}`, 'info');
+            
             if (currentEditingId) {
                 overwriteBtn.style.display = 'block';
+                debugLog('上書きボタンを表示', 'success');
             } else {
                 overwriteBtn.style.display = 'none';
+                debugLog('上書きボタンを非表示', 'info');
             }
         }
 
@@ -2882,6 +2584,20 @@
             window.currentPotionData = null;
             updatePotionPreview();
             showNotification('ポーション情報を削除しました');
+        }
+
+        // localStorage完全リセット
+        function resetLocalStorage() {
+            if (confirm('🚨 WARNING: 全てのデータが削除されます。本当に実行しますか？')) {
+                localStorage.removeItem('novel_ai_prompts');
+                prompts = [];
+                allTags = new Set();
+                debugLog('🔥 localStorage完全クリア実行', 'info');
+                displayPrompts();
+                updateStats();
+                updateTagsDisplay();
+                showNotification('localStorage完全クリア完了');
+            }
         }
 
         // 全入力内容のクリア
@@ -2914,6 +2630,8 @@
             if (panel.style.display === 'none') {
                 panel.style.display = 'block';
                 debugLog('デバッグパネルを開きました', 'info');
+                // パネルを開いた時に自動でログをコピー
+                copyDebugLogs();
             } else {
                 panel.style.display = 'none';
             }
@@ -2936,15 +2654,33 @@
 
         // デバッグログのコピー
         async function copyDebugLogs() {
+            if (debugLogs.length === 0) {
+                debugLog('コピーするログがありません', 'warn');
+                return;
+            }
+            
             const logText = debugLogs.map(log => 
                 `[${log.time}] ${log.type.toUpperCase()}: ${log.message}`
             ).join('\n');
             
+            debugLog(`${debugLogs.length}件のログをコピー中...`, 'info');
+            
             try {
                 await navigator.clipboard.writeText(logText);
-                debugLog('ログをクリップボードにコピーしました', 'success');
+                debugLog('✅ ログをクリップボードにコピーしました', 'success');
+                // 通知も表示
+                showNotification('デバッグログをコピーしました！');
             } catch (err) {
-                debugLog('ログのコピーに失敗しました: ' + err.message, 'error');
+                debugLog('❌ ログのコピーに失敗: ' + err.message, 'error');
+                // フォールバック: textarea作成してコピー
+                const textarea = document.createElement('textarea');
+                textarea.value = logText;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                debugLog('代替方法でコピー完了', 'success');
+                showNotification('デバッグログをコピーしました（代替方法）');
             }
         }
 
@@ -3035,16 +2771,54 @@
 
         // データの保存（localStorage）
         function savePrompts() {
+            // 画像データも含めてlocalStorageに保存（Issue #001修正）
+            const promptsForStorage = prompts;
+            
             const saveData = {
-                prompts: prompts,
+                prompts: promptsForStorage,
                 tags: Array.from(allTags)
             };
+            
+            debugLog(`🔧 画像除外後のプロンプト準備完了`, 'info');
             debugLog(`localStorage保存実行: プロンプト${prompts.length}件、タグ${allTags.size}個`, 'info');
             try {
-                localStorage.setItem('novel_ai_prompts', JSON.stringify(saveData));
+                const jsonString = JSON.stringify(saveData);
+                debugLog(`JSON文字列長: ${jsonString.length}文字 (${(jsonString.length/1024/1024).toFixed(2)}MB)`, 'info');
+                
+                // localStorageサイズ制限チェック
+                try {
+                    localStorage.setItem('test_size', jsonString);
+                    localStorage.removeItem('test_size');
+                    debugLog(`✅ サイズテスト成功: localStorage制限内`, 'success');
+                } catch (sizeError) {
+                    debugLog(`❌ サイズテスト失敗: ${sizeError.message}`, 'error');
+                    debugLog(`🚨 CRITICAL: データが大きすぎます！画像データを削減してください`, 'error');
+                    return;
+                }
+                
+                localStorage.setItem('novel_ai_prompts', jsonString);
+                
+                // 保存後に即座に読み込んで確認
+                const verification = localStorage.getItem('novel_ai_prompts');
+                if (verification) {
+                    const verifyData = JSON.parse(verification);
+                    debugLog(`✅ 保存確認: プロンプト${verifyData.prompts.length}件`, 'success');
+                    
+                    // 今保存したプロンプトが含まれているかチェック
+                    const latestPrompt = verifyData.prompts[0];
+                    if (latestPrompt && latestPrompt.title === saveData.prompts[0].title) {
+                        debugLog(`✅ 最新プロンプト確認: "${latestPrompt.title}" 保存済み`, 'success');
+                    } else {
+                        debugLog(`❌ 最新プロンプト確認失敗`, 'error');
+                    }
+                } else {
+                    debugLog('❌ 保存確認失敗: データが見つからない', 'error');
+                }
+                
                 debugLog('localStorage保存成功', 'success');
             } catch (err) {
                 debugLog('localStorage保存エラー: ' + err.message, 'error');
+                debugLog('エラー詳細: ' + err.stack, 'error');
             }
         }
 
@@ -3059,7 +2833,7 @@
                     
                     if (data.prompts) {
                         prompts = data.prompts;
-                        debugLog(`プロンプト読み込み: ${prompts.length}件`, 'success');
+                        debugLog(`🔧 プロンプト読み込み: ${prompts.length}件（画像データは除外済み）`, 'success');
                         // 日時の文字列をDateオブジェクトに変換
                         prompts.forEach(prompt => {
                             if (typeof prompt.timestamp === 'string') {
@@ -3143,485 +2917,78 @@
             }
         `;
         document.head.appendChild(style);
+
+        // ========== モード切り替え機能 ==========
         
-        // ページ読み込み完了時の処理
-        window.addEventListener('DOMContentLoaded', function() {
-            console.log('🚀 統合管理アプリ初期化完了');
+        // モード切り替え関数
+        function switchMode(mode) {
+            debugLog(`=== モード切り替え開始: ${currentMode} → ${mode} ===`, 'info');
             
-            // 初期データ追加は一回だけ（コメントアウト）
-            /* setTimeout(() => {
-                if (window.yarakashiList && window.yarakashiList.length === 0 && window.firebaseTest && window.firebaseTest.getCurrentUser()) {
-                    console.log('📝 初期やらかしデータ追加中');
-                    // 今日のやらかしを追加
-                    const titleInput = document.getElementById('yarakashi-title');
-                    const categorySelect = document.getElementById('yarakashi-category');
-                    const contentTextarea = document.getElementById('yarakashi-content');
-                    
-                    if (titleInput && categorySelect && contentTextarea) {
-                        titleInput.value = 'Firebase認証でauth.emailを使用してPERMISSION_DENIED発生';
-                        categorySelect.value = 'firebase';
-                        contentTextarea.value = 'Firebase Realtime Databaseのルールが `$uid === auth.uid` なのに、コードで `auth.email` を使用。結果：全てのDB操作でPERMISSION_DENIEDエラー。修正：`auth.uid`を使用するように変更。';
-                        window.addYarakashi();
-                    }
-                }
-            }, 3000); */
-        });
-    </script>
-    
-    <!-- Claude Codeタブを追加 -->
-    <script>
-        // Claude Codeタブのコンテンツを動的に追加
-        window.addEventListener('DOMContentLoaded', function() {
-            const novelAiTab = document.getElementById('novel-ai-tab');
-            if (novelAiTab) {
-                const claudeCodeTab = document.createElement('div');
-                claudeCodeTab.id = 'claude-code-tab';
-                claudeCodeTab.className = 'tab-content';
-                claudeCodeTab.innerHTML = `
-                    <div style="background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 20px;">
-                        <h3>💻 Claude Code プロンプト管理</h3>
-                        <div style="margin-bottom: 15px;">
-                            <label style="display: block; font-weight: 600; margin-bottom: 5px;">プロンプト:</label>
-                            <textarea id="claude-prompt" rows="8" placeholder="Claude Codeで使用するプロンプトを入力..." style="width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 6px; resize: vertical;"></textarea>
-                        </div>
-                        <div style="margin-bottom: 15px;">
-                            <label style="display: block; font-weight: 600; margin-bottom: 5px;">カテゴリ:</label>
-                            <select id="claude-category" style="width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 6px;">
-                                <option value="coding">コーディング</option>
-                                <option value="debug">デバッグ</option>
-                                <option value="refactor">リファクタリング</option>
-                                <option value="analysis">コード分析</option>
-                                <option value="planning">設計・計画</option>
-                                <option value="other">その他</option>
-                            </select>
-                        </div>
-                        <button onclick="addClaudePrompt()" style="background: #7B68EE; color: white; padding: 12px 24px; border: none; border-radius: 6px; font-weight: 600; cursor: pointer;">
-                            💻 プロンプト追加
-                        </button>
-                    </div>
-                    
-                    <!-- 🔍 Claude プロンプト検索機能 -->
-                    <div style="margin-bottom: 15px;">
-                        <div style="display: flex; gap: 10px; margin-bottom: 5px;">
-                            <input type="text" id="claude-search" placeholder="🔍 Claude プロンプトを検索（内容・カテゴリ）" 
-                                   style="flex: 1; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px;"
-                                   oninput="filterClaudePrompts()" onkeypress="if(event.key==='Enter') filterClaudePrompts()">
-                            <button onclick="filterClaudePrompts()" style="background: #7B68EE; color: white; padding: 10px 15px; border: none; border-radius: 8px; cursor: pointer;">🔍 検索</button>
-                            <button onclick="clearClaudeSearch()" style="background: #666; color: white; padding: 10px 15px; border: none; border-radius: 8px; cursor: pointer;">クリア</button>
-                        </div>
-                        <div style="font-size: 12px; color: #666;">
-                            <span id="claude-search-result">全 <span id="claude-total-count">0</span> 件</span>
-                        </div>
-                    </div>
-                    
-                    <div id="claude-prompt-list" style="min-height: 200px;">
-                        <!-- Claude Codeプロンプト一覧がここに表示される -->
-                    </div>
-                `;
-                
-                novelAiTab.parentNode.insertBefore(claudeCodeTab, novelAiTab.nextSibling);
-                console.log('✅ Claude Codeタブ追加完了');
-            }
-        });
-        
-        // 📋 課題リスト管理機能
-        let issuesList = [];
-        window.issuesList = issuesList;
-        
-        window.addIssue = async function() {
-            try {
-                const title = document.getElementById('issue-title').value.trim();
-                const priority = document.getElementById('issue-priority').value;
-                const project = document.getElementById('issue-project').value;
-                const content = document.getElementById('issue-content').value.trim();
-                
-                if (!title || !content) {
-                    alert('タイトルと詳細を入力してください');
-                    return;
-                }
-                
-                const issue = {
-                    id: `issue_${Date.now()}_${Math.floor(Math.random() * 10000)}`,
-                    title: title,
-                    priority: priority,
-                    project: project,
-                    content: content,
-                    status: 'open',
-                    timestamp: new Date().toISOString()
-                };
-                
-                if (window.firebaseTest && window.firebaseTest.getCurrentUser()) {
-                    const user = window.firebaseTest.getCurrentUser();
-                    const issueRef = window.firebaseTest.ref(window.firebaseTest.database, `users/${user.uid}/issues_list/${issue.id}`);
-                    await window.firebaseTest.set(issueRef, issue);
-                }
-                
-                issuesList.push(issue);
-                displayIssuesList();
-                
-                // フォームクリア
-                document.getElementById('issue-title').value = '';
-                document.getElementById('issue-content').value = '';
-                
-                console.log('✅ 課題追加完了:', issue.title);
-                
-            } catch (error) {
-                console.error('❌ 課題追加エラー:', error.message);
-                alert('❌ 課題追加エラー: ' + error.message);
-            }
-        };
-        
-        window.loadIssuesList = async function() {
-            try {
-                if (!window.firebaseTest || !window.firebaseTest.getCurrentUser()) {
-                    console.log('⚠️ Firebase未接続または未ログイン - 課題リスト読み込みスキップ');
-                    return;
-                }
-                
-                console.log('📖 課題リスト読み込み開始');
-                const user = window.firebaseTest.getCurrentUser();
-                const issuesRef = window.firebaseTest.ref(window.firebaseTest.database, `users/${user.uid}/issues_list`);
-                const snapshot = await window.firebaseTest.get(issuesRef);
-                
-                if (snapshot.exists()) {
-                    const data = snapshot.val();
-                    issuesList = Object.values(data).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-                    window.issuesList = issuesList;
-                    console.log('✅ 課題リスト読み込み成功:', issuesList.length, '件');
-                } else {
-                    issuesList = [];
-                    window.issuesList = issuesList;
-                    console.log('📭 課題リストなし');
-                }
-                
-                displayIssuesList();
-                
-            } catch (error) {
-                console.error('❌ 課題リスト読み込みエラー:', error.message);
-            }
-        };
-        
-        // 課題リスト表示機能とその他のヘルパー関数
-        function displayIssuesList(searchQuery = '') {
-            console.log('🖼️ displayIssuesList開始');
-            
-            const listContainer = document.getElementById('issue-list');
-            if (!listContainer) return;
-            
-            // 🔍 検索フィルタリング
-            let filteredIssuesList = searchQuery ? 
-                issuesList.filter(issue => 
-                    issue.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                    issue.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                    issue.project.toLowerCase().includes(searchQuery.toLowerCase())
-                ) : [...issuesList];
-            
-            if (filteredIssuesList.length === 0) {
-                listContainer.innerHTML = searchQuery ? 
-                    `<div style="text-align: center; padding: 20px; color: #666;">「${searchQuery}」に一致する課題が見つかりません</div>` :
-                    '<div style="text-align: center; padding: 20px; color: #666;">課題リストは空です</div>';
+            if (currentMode === mode) {
+                debugLog('同じモードのため処理をスキップ', 'warning');
                 return;
             }
             
-            const priorityColors = { 'high': '#f44336', 'medium': '#FF9800', 'low': '#4CAF50' };
-            const priorityLabels = { 'high': '🔥 高', 'medium': '📋 中', 'low': '💤 低' };
-            const projectLabels = { 'novel-ai': '🎨 Novel AI', 'yarakashi': '🚨 やらかし管理', 'claude-code': '💻 Claude Code', 'other': '🔧 その他' };
+            // 現在のモードのデータを保存
+            savePromptsForMode();
             
-            const html = filteredIssuesList.map(issue => {
-                const escapeHtml = (text) => text.replace(/[&<>"'`]/g, char => `&#${char.charCodeAt(0)};`);
-                const firstLine = issue.content.split('\n')[0];
-                const statusButton = issue.status === 'open' ? 
-                    `<button onclick="resolveIssue('${issue.id}')" style="background: #4CAF50; color: white; padding: 5px 10px; border: none; border-radius: 4px; cursor: pointer;">完了</button>` : 
-                    `<button onclick="reopenIssue('${issue.id}')" style="background: #FF9800; color: white; padding: 5px 10px; border: none; border-radius: 4px; cursor: pointer;">再オープン</button>`;
-                
-                return `<div class="issue-item" style="background: white; border-radius: 10px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-left: 4px solid ${priorityColors[issue.priority]};">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                        <div style="font-size: 1.1rem; font-weight: 600; color: #333;">${escapeHtml(issue.title)}</div>
-                        <div style="font-size: 11px; color: #999;">${issue.content.split('\n').length}行 | ${issue.content.length}文字</div>
-                    </div>
-                    <div style="font-size: 14px; color: #666; margin-bottom: 8px;">
-                        📅 ${new Date(issue.timestamp).toLocaleDateString('ja-JP')} 
-                        ${priorityLabels[issue.priority]} | ${projectLabels[issue.project]}
-                        ${issue.status === 'closed' ? '✅ 完了済み' : '🔄 オープン'}
-                    </div>
-                    <div style="color: #666; font-size: 14px; margin: 8px 0;">
-                        ${escapeHtml(firstLine)}${issue.content.split('\n').length > 1 ? ' ...' : ''}
-                    </div>
-                    <div style="margin-top: 10px;">
-                        <button onclick="toggleIssueContent('${issue.id}')" style="background: #2196F3; color: white; padding: 5px 10px; border: none; border-radius: 4px; cursor: pointer; margin-right: 5px;">
-                            <span id="toggle-text-${issue.id}">詳細表示</span>
-                        </button>
-                        ${statusButton}
-                        <button onclick="deleteIssue('${issue.id}')" style="background: #f44336; color: white; padding: 5px 10px; border: none; border-radius: 4px; cursor: pointer; margin-left: 5px;">削除</button>
-                    </div>
-                    <div id="full-content-${issue.id}" style="display: none; margin-top: 10px; padding: 10px; background: #f9f9f9; border-radius: 6px; font-size: 14px;">
-                        ${escapeHtml(issue.content).replace(/\n/g, '<br>')}
-                    </div>
-                </div>`;
-            }).join('');
+            // 新しいモードに切り替え
+            currentMode = mode;
             
-            listContainer.innerHTML = html;
+            // タブの表示更新
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelector(`[data-mode="${mode}"]`).classList.add('active');
+            
+            // 新しいモードのデータを読み込み
+            loadPromptsForMode(mode);
+            
+            debugLog(`モード切り替え完了: ${mode}`, 'success');
+            showNotification(`${mode === 'novelai' ? '🎨 Novel AI' : '💻 Claude Code'}モードに切り替えました！`);
         }
         
-        window.filterIssueList = function() {
-            const searchInput = document.getElementById('issue-search');
-            const searchQuery = searchInput ? searchInput.value.trim() : '';
-            displayIssuesList(searchQuery);
-        };
-        
-        window.toggleIssueContent = function(itemId) {
-            const fullContentElement = document.getElementById(`full-content-${itemId}`);
-            const toggleTextElement = document.getElementById(`toggle-text-${itemId}`);
+        // モード別データ保存
+        function savePromptsForMode() {
+            const storageKey = `promptManager_${currentMode}_prompts`;
+            const tagsKey = `promptManager_${currentMode}_tags`;
             
-            if (fullContentElement && toggleTextElement) {
-                const isHidden = fullContentElement.style.display === 'none';
-                fullContentElement.style.display = isHidden ? 'block' : 'none';
-                toggleTextElement.textContent = isHidden ? '詳細非表示' : '詳細表示';
-            }
-        };
-        
-        window.resolveIssue = async function(id) { await updateIssueStatus(id, 'closed'); };
-        window.reopenIssue = async function(id) { await updateIssueStatus(id, 'open'); };
-        
-        async function updateIssueStatus(id, status) {
-            try {
-                const issue = issuesList.find(i => i.id == id);
-                if (!issue) return;
-                
-                issue.status = status;
-                
-                if (window.firebaseTest && window.firebaseTest.getCurrentUser()) {
-                    const user = window.firebaseTest.getCurrentUser();
-                    const issueRef = window.firebaseTest.ref(window.firebaseTest.database, `users/${user.uid}/issues_list/${id}`);
-                    await window.firebaseTest.set(issueRef, issue);
-                }
-                
-                displayIssuesList();
-                console.log('✅ 課題ステータス更新:', status);
-                
-            } catch (error) {
-                console.error('❌ 課題ステータス更新エラー:', error.message);
-                alert('❌ ステータス更新エラー: ' + error.message);
-            }
+            debugLog(`${currentMode}モードのデータを保存: ${prompts.length}件`, 'info');
+            localStorage.setItem(storageKey, JSON.stringify(prompts));
+            localStorage.setItem(tagsKey, JSON.stringify(Array.from(allTags)));
         }
         
-        window.deleteIssue = async function(id) {
-            if (!confirm('この課題を削除してもよろしいですか？')) return;
+        // モード別データ読み込み
+        function loadPromptsForMode(mode) {
+            const storageKey = `promptManager_${mode}_prompts`;
+            const tagsKey = `promptManager_${mode}_tags`;
             
             try {
-                if (window.firebaseTest && window.firebaseTest.getCurrentUser()) {
-                    const user = window.firebaseTest.getCurrentUser();
-                    const issueRef = window.firebaseTest.ref(window.firebaseTest.database, `users/${user.uid}/issues_list/${id}`);
-                    await window.firebaseTest.set(issueRef, null);
-                }
+                const stored = localStorage.getItem(storageKey);
+                prompts = stored ? JSON.parse(stored) : [];
                 
-                issuesList = issuesList.filter(i => i.id !== id);
-                window.issuesList = issuesList;
-                displayIssuesList();
-                console.log('✅ 課題削除完了');
+                const storedTags = localStorage.getItem(tagsKey);
+                allTags = new Set(storedTags ? JSON.parse(storedTags) : []);
                 
-            } catch (error) {
-                console.error('❌ 課題削除エラー:', error.message);
-                alert('❌ 削除エラー: ' + error.message);
-            }
-        };
-        
-        // Claude Code プロンプト管理機能
-        let claudePrompts = [];
-        window.claudePrompts = claudePrompts;
-        
-        window.loadClaudePrompts = async function() {
-            try {
-                if (!window.firebaseTest || !window.firebaseTest.getCurrentUser()) {
-                    console.log('⚠️  ログインしていません');
-                    return;
-                }
+                debugLog(`${mode}モードのデータを読み込み: ${prompts.length}件`, 'info');
                 
-                console.log('📖 Claude プロンプト読み込み開始');
-                const user = window.firebaseTest.getCurrentUser();
-                const promptsRef = window.firebaseTest.ref(window.firebaseTest.database, `users/${user.uid}/claude_prompts`);
-                const snapshot = await window.firebaseTest.get(promptsRef);
+                // UI更新
+                displayPrompts();
+                updateStats();
+                updateTagsDisplay();
                 
-                if (snapshot.exists()) {
-                    const data = snapshot.val();
-                    claudePrompts = Object.values(data).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-                    window.claudePrompts = claudePrompts;
-                    console.log('✅ Claude プロンプト読み込み成功:', claudePrompts.length, '件');
-                } else {
-                    claudePrompts = [];
-                    window.claudePrompts = claudePrompts;
-                    console.log('📭 Claude プロンプトなし');
-                }
-                
-                displayClaudePrompts();
+                // 入力フィールドをクリア
+                clearInputs();
                 
             } catch (error) {
-                console.error('❌ Claude プロンプト読み込みエラー:', error.message);
+                debugLog(`${mode}モードのデータ読み込みエラー: ${error.message}`, 'error');
+                prompts = [];
+                allTags = new Set();
+                displayPrompts();
+                updateStats();
+                updateTagsDisplay();
             }
-        };
-        
-        window.addClaudePrompt = async function() {
-            try {
-                const prompt = document.getElementById('claude-prompt').value.trim();
-                const category = document.getElementById('claude-category').value;
-                
-                if (!prompt) {
-                    alert('プロンプトを入力してください');
-                    return;
-                }
-                
-                const claudePrompt = {
-                    id: `claude_${Date.now()}_${Math.floor(Math.random() * 10000)}`,
-                    prompt,
-                    category,
-                    timestamp: new Date().toISOString(),
-                    useCount: 0
-                };
-                
-                console.log('💻 Claude プロンプト追加開始:', category);
-                
-                if (window.firebaseTest && window.firebaseTest.getCurrentUser()) {
-                    const user = window.firebaseTest.getCurrentUser();
-                    const promptRef = window.firebaseTest.ref(window.firebaseTest.database, `users/${user.uid}/claude_prompts/${claudePrompt.id}`);
-                    await window.firebaseTest.set(promptRef, claudePrompt);
-                    console.log('✅ Firebase保存成功');
-                }
-                
-                claudePrompts.push(claudePrompt);
-                document.getElementById('claude-prompt').value = '';
-                displayClaudePrompts();
-                console.log('✅ Claude プロンプト追加完了');
-                
-            } catch (error) {
-                console.error('❌ Claude プロンプト追加エラー:', error.message);
-                alert('エラー: ' + error.message);
-            }
-        };
-        
-        function displayClaudePrompts(searchQuery = '') {
-            console.log('🖼️ displayClaudePrompts開始, searchQuery:', searchQuery);
-            const listContainer = document.getElementById('claude-prompt-list');
-            const totalCountElement = document.getElementById('claude-total-count');
-            const searchResultElement = document.getElementById('claude-search-result');
-            
-            console.log('🔍 listContainer:', listContainer);
-            console.log('🔍 claudePrompts.length:', claudePrompts.length);
-            console.log('🔍 claudePrompts構造:', claudePrompts.map(p => ({ id: p.id, hasContent: !!p.content, hasCategory: !!p.category, keys: Object.keys(p) })));
-            
-            if (!listContainer) {
-                console.error('❌ claude-prompt-list要素が見つかりません');
-                return;
-            }
-            
-            // 🔍 検索フィルタリング
-            let filteredPrompts = searchQuery ? 
-                claudePrompts.filter(prompt => {
-                    // null/undefined チェック (修正：promptフィールドを検索)
-                    const content = prompt.prompt || '';
-                    const category = prompt.category || '';
-                    console.log('🔍 検索対象:', { content: content.substring(0, 50), category });
-                    return content.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                           category.toLowerCase().includes(searchQuery.toLowerCase());
-                }) : [...claudePrompts];
-            
-            // 📊 検索結果表示更新
-            if (totalCountElement) totalCountElement.textContent = filteredPrompts.length;
-            if (searchResultElement) {
-                searchResultElement.innerHTML = searchQuery ? 
-                    `検索結果: <span style="color: #7B68EE; font-weight: bold;">${filteredPrompts.length}</span> 件 / 全 ${claudePrompts.length} 件` :
-                    `全 <span id="claude-total-count">${claudePrompts.length}</span> 件`;
-            }
-            
-            if (filteredPrompts.length === 0) {
-                const message = searchQuery ? 
-                    `<div style="text-align: center; padding: 20px; color: #666;">「${searchQuery}」に一致するプロンプトが見つかりません</div>` :
-                    '<div style="text-align: center; padding: 20px; color: #666;">Claude Codeプロンプトリストは空です</div>';
-                listContainer.innerHTML = message;
-                return;
-            }
-            
-            const html = filteredPrompts.map(prompt => `
-                <div style="background: white; border-radius: 10px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-left: 4px solid #7B68EE;">
-                    <div style="display: flex; justify-content: between; align-items: center; margin-bottom: 10px;">
-                        <span style="background: #7B68EE; color: white; padding: 4px 8px; border-radius: 4px; font-size: 0.8em;">${prompt.category}</span>
-                        <span style="color: #666; font-size: 0.9em;">${new Date(prompt.timestamp).toLocaleDateString('ja-JP')} 使用回数: ${prompt.useCount}</span>
-                    </div>
-                    <div style="white-space: pre-wrap; line-height: 1.5; margin-bottom: 10px;">${prompt.prompt}</div>
-                    <div>
-                        <button onclick="copyClaudePrompt('${prompt.id}')" style="background: #4CAF50; color: white; padding: 5px 10px; border: none; border-radius: 4px; cursor: pointer; margin-right: 5px;">📋 コピー</button>
-                        <button onclick="deleteClaudePrompt('${prompt.id}')" style="background: #f44336; color: white; padding: 5px 10px; border: none; border-radius: 4px; cursor: pointer;">🗑️ 削除</button>
-                    </div>
-                </div>
-            `).join('');
-            
-            listContainer.innerHTML = html;
         }
-        
-        // 🔍 Claude プロンプト検索フィルタリング機能
-        window.filterClaudePrompts = function() {
-            console.log('🔍 filterClaudePrompts実行開始');
-            const searchInput = document.getElementById('claude-search');
-            const searchQuery = searchInput ? searchInput.value.trim() : '';
-            console.log('🔍 検索クエリ:', searchQuery);
-            console.log('🔍 Claude プロンプト総数:', claudePrompts.length);
-            displayClaudePrompts(searchQuery);
-        };
-        
-        // 検索クリア機能
-        window.clearClaudeSearch = function() {
-            const searchInput = document.getElementById('claude-search');
-            if (searchInput) {
-                searchInput.value = '';
-                displayClaudePrompts('');
-            }
-        };
-        
-        window.copyClaudePrompt = async function(id) {
-            const prompt = claudePrompts.find(p => p.id == id);
-            if (!prompt) return;
-            
-            try {
-                await navigator.clipboard.writeText(prompt.prompt);
-                
-                // 使用回数を増やす
-                prompt.useCount++;
-                if (window.firebaseTest && window.firebaseTest.getCurrentUser()) {
-                    const user = window.firebaseTest.getCurrentUser();
-                    const promptRef = window.firebaseTest.ref(window.firebaseTest.database, `users/${user.uid}/claude_prompts/${id}`);
-                    await window.firebaseTest.set(promptRef, prompt);
-                }
-                
-                displayClaudePrompts();
-                console.log('📋 プロンプトコピー完了:', prompt.category);
-                
-                // 通知表示
-                showNotification('プロンプトをコピーしました！');
-                
-            } catch (error) {
-                alert('コピーに失敗しました');
-                console.error('❌ コピーエラー:', error.message);
-            }
-        };
-        
-        window.deleteClaudePrompt = async function(id) {
-            if (!confirm('このプロンプトを削除しますか？')) return;
-            
-            try {
-                claudePrompts = claudePrompts.filter(p => p.id != id);
-                
-                if (window.firebaseTest && window.firebaseTest.getCurrentUser()) {
-                    const user = window.firebaseTest.getCurrentUser();
-                    const promptRef = window.firebaseTest.ref(window.firebaseTest.database, `users/${user.uid}/claude_prompts/${id}`);
-                    await window.firebaseTest.set(promptRef, null);
-                }
-                
-                displayClaudePrompts();
-                console.log('✅ プロンプト削除完了');
-                
-            } catch (error) {
-                console.error('❌ プロンプト削除エラー:', error.message);
-            }
-        };
     </script>
 </body>
 </html>
