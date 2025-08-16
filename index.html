@@ -3127,7 +3127,31 @@
             }
             
             // 3. データ統合（Firebase優先、localStorageはバックアップ）
-            prompts = firebasePrompts.length > 0 ? firebasePrompts : localPrompts;
+            if (firebasePrompts.length > 0) {
+                prompts = firebasePrompts;
+                debugLog('Firebase データを使用', 'info');
+            } else if (localPrompts.length > 0) {
+                prompts = localPrompts;
+                debugLog('localStorage データを使用（Firebase移行が必要）', 'warn');
+                
+                // 🔄 初回移行: localStorageデータをFirebaseに移行
+                if (window.firebaseTest && window.firebaseTest.getCurrentUser()) {
+                    debugLog('localStorage → Firebase 移行開始', 'info');
+                    try {
+                        const user = window.firebaseTest.getCurrentUser();
+                        for (const prompt of localPrompts) {
+                            const promptRef = window.firebaseTest.ref(window.firebaseTest.database, `users/${user.uid}/novel_ai_prompts/${prompt.id}`);
+                            await window.firebaseTest.set(promptRef, prompt);
+                        }
+                        debugLog(`Firebase移行完了: ${localPrompts.length}件`, 'success');
+                    } catch (error) {
+                        debugLog('Firebase移行エラー: ' + error.message, 'error');
+                    }
+                }
+            } else {
+                prompts = [];
+                debugLog('データなし（Firebase・localStorage共に空）', 'info');
+            }
             
             // 4. データ構造の正規化
             prompts.forEach(prompt => {
