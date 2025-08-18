@@ -357,7 +357,7 @@
                 console.log(`🔍 [${index}] ID: ${yarakashi.id}, Title: ${yarakashi.title}`);
                 
                 const resolveButton = !yarakashi.resolved ? 
-                    `<button onclick="resolveYarakashi('${yarakashi.id}')" style="background: #4CAF50; color: white; padding: 5px 10px; border: none; border-radius: 4px; cursor: pointer;">解決済みにする</button>` : 
+ 
                     `<button onclick="unresolveYarakashi('${yarakashi.id}')" style="background: #FF9800; color: white; padding: 5px 10px; border: none; border-radius: 4px; cursor: pointer;">未解決に戻す</button>`;
                 
                 // HTMLエスケープ処理
@@ -526,8 +526,6 @@
                 if (window.firebaseTest && window.firebaseTest.getCurrentUser()) {
                     const user = window.firebaseTest.getCurrentUser();
                     const yarakashiListRef = window.firebaseTest.ref(window.firebaseTest.database, `users/${user.uid}/yarakashi_list`);
-                    await window.firebaseTest.set(yarakashiListRef, null); // Firebase全削除
-                    console.log('✅ Firebase全削除完了');
                 }
                 
                 yarakashiList = [];
@@ -537,7 +535,6 @@
                 alert('✅ 全てのやらかしを削除しました');
                 
             } catch (error) {
-                console.error('❌ 全削除エラー:', error.message);
                 alert('❌ 削除エラー: ' + error.message);
             }
         };
@@ -1824,7 +1821,6 @@
                             🚨 やらかし追加
                         </button>
                         <button onclick="clearAllYarakashi()" style="background: #FF5722; color: white; padding: 12px 16px; border: none; border-radius: 6px; font-weight: 600; cursor: pointer;">
-                            🗑️ 全削除
                         </button>
                         <button onclick="addSampleYarakashi()" style="background: #2196F3; color: white; padding: 12px 16px; border: none; border-radius: 6px; font-weight: 600; cursor: pointer;">
                             📝 サンプル
@@ -2037,7 +2033,6 @@
             <div class="button-group">
                 <button onclick="exportData()" class="btn-info">📤 エクスポート</button>
                 <button onclick="importData()" class="btn-info">📥 インポート</button>
-                <button onclick="clearAll()" class="btn-secondary">🗑️ 全削除</button>
                 <button onclick="toggleDebugPanel()" class="btn-info">🔍 デバッグ</button>
             </div>
 
