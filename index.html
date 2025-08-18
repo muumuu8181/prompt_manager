@@ -1763,7 +1763,7 @@
 </head>
 <body>
     <div class="container">
-        <div class="version-badge">v0.82</div>
+        <div class="version-badge">v0.83</div>
         <div class="header">
             <h1>📋 統合管理アプリ</h1>
             
@@ -1777,9 +1777,10 @@
                     ログアウト
                 </button>
             </div>
-            
-            <!-- タブメニュー -->
-            <div class="tab-menu" style="margin-top: 8px;">
+        </div>
+        
+        <!-- タブメニュー（ヘッダー外） -->
+        <div class="tab-menu" style="margin-top: 0px; background: #f8f9fa; padding: 5px 15px; border-bottom: 1px solid #e9ecef;">
                 <button class="tab-button" data-tab="yarakashi" onclick="switchTab('yarakashi')">
                     🚨 やらかしリスト
                 </button>
@@ -1792,7 +1793,6 @@
                 <button class="tab-button" data-tab="claude-code" onclick="switchTab('claude-code')">
                     💻 Claude Code
                 </button>
-            </div>
         </div>
 
         <!-- やらかしリストタブ -->
