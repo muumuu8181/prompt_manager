@@ -346,8 +346,8 @@
             
             if (filteredYarakashiList.length === 0) {
                 const message = searchQuery ? 
-                    `<div style="text-align: center; padding: 20px; color: #666;">「${searchQuery}」に一致するやらかしが見つかりません</div>` :
-                    '<div style="text-align: center; padding: 20px; color: #666;">やらかしリストは空です</div>';
+                    `<div style="text-align: center; padding: 8px; color: #666;">「${searchQuery}」に一致するやらかしが見つかりません</div>` :
+                    '<div style="text-align: center; padding: 8px; color: #666;">やらかしリストは空です</div>';
                 listContainer.innerHTML = message;
                 return;
             }
@@ -657,15 +657,15 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            padding: 20px;
+            padding: 5px;
         }
 
         .container {
             max-width: 700px;
-            margin: 0 auto;
+            margin: 5px auto;
             background: white;
-            border-radius: 15px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            border-radius: 8px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
             overflow: hidden;
             position: relative;
         }
@@ -688,18 +688,20 @@
         .header {
             background: linear-gradient(90deg, #4A90E2 0%, #7B68EE 100%);
             color: white;
-            padding: 20px 30px;
-            text-align: center;
+            padding: 8px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
         .header h1 {
-            font-size: 2rem;
-            margin-bottom: 10px;
+            font-size: 1.6rem;
+            margin: 0;
         }
 
         .controls {
             background: #f8f9fa;
-            padding: 20px;
+            padding: 8px 15px;
             border-bottom: 1px solid #e9ecef;
         }
 
@@ -1400,10 +1402,10 @@
 
         .main-content {
             background: white;
-            border-radius: 10px;
-            margin-bottom: 20px;
+            border-radius: 8px;
+            margin-bottom: 8px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            padding: 20px;
+            padding: 8px 15px;
         }
 
         .stats {
@@ -1697,12 +1699,12 @@
 
         .tab-button {
             flex: 1;
-            padding: 12px 16px;
+            padding: 6px 10px;
             border: none;
-            border-radius: 6px;
+            border-radius: 4px;
             background: rgba(255,255,255,0.2);
             color: white;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s;
@@ -1765,19 +1767,19 @@
         <div class="header">
             <h1>📋 統合管理アプリ</h1>
             
-            <!-- 認証エリア -->
-            <div style="margin-top: 15px; padding: 10px; background: rgba(255,255,255,0.1); border-radius: 8px;">
-                <p id="auth-status" style="margin-bottom: 8px; font-weight: bold;">🔐 認証状態確認中...</p>
-                <button id="login-btn" onclick="testLogin()" style="background: #4CAF50; color: white; padding: 8px 16px; border: none; border-radius: 4px; margin-right: 10px; display: none;">
-                    🔐 Googleでログイン
+            <!-- 認証エリア（右寄せ） -->
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span id="auth-status" style="font-size: 13px; font-weight: bold;">🔐 認証中...</span>
+                <button id="login-btn" onclick="testLogin()" style="background: #4CAF50; color: white; padding: 4px 10px; border: none; border-radius: 4px; font-size: 12px; display: none;">
+                    🔐 ログイン
                 </button>
-                <button id="logout-btn" onclick="testLogout()" style="background: #f44336; color: white; padding: 8px 16px; border: none; border-radius: 4px; display: none;">
-                    🚪 ログアウト
+                <button id="logout-btn" onclick="testLogout()" style="background: #f44336; color: white; padding: 4px 10px; border: none; border-radius: 4px; font-size: 12px; display: none;">
+                    ログアウト
                 </button>
             </div>
             
             <!-- タブメニュー -->
-            <div class="tab-menu" style="margin-top: 15px;">
+            <div class="tab-menu" style="margin-top: 8px;">
                 <button class="tab-button" data-tab="yarakashi" onclick="switchTab('yarakashi')">
                     🚨 やらかしリスト
                 </button>
@@ -1796,7 +1798,7 @@
         <!-- やらかしリストタブ -->
         <div id="yarakashi-tab" class="tab-content">
             <div class="yarakashi-section">
-                <div style="background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 20px;">
+                <div style="background: white; padding: 8px 15px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 8px;">
                     <h3>🚨 新しいやらかしを追加</h3>
                     <div style="margin-bottom: 15px;">
                         <label for="yarakashi-title" style="display: block; font-weight: 600; margin-bottom: 5px;">タイトル:</label>
@@ -1845,7 +1847,7 @@
         <!-- 📋 課題リストタブ -->
         <div id="issues-tab" class="tab-content">
             <div class="issues-section">
-                <div style="background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 20px;">
+                <div style="background: white; padding: 8px 15px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 8px;">
                     <h3>📋 新しい課題を追加</h3>
                     <div style="margin-bottom: 15px;">
                         <label for="issue-title" style="display: block; font-weight: 600; margin-bottom: 5px;">タイトル:</label>
@@ -3259,7 +3261,7 @@
                 claudeCodeTab.id = 'claude-code-tab';
                 claudeCodeTab.className = 'tab-content';
                 claudeCodeTab.innerHTML = `
-                    <div style="background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 20px;">
+                    <div style="background: white; padding: 8px 15px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 8px;">
                         <h3>💻 Claude Code プロンプト管理</h3>
                         <div style="margin-bottom: 15px;">
                             <label style="display: block; font-weight: 600; margin-bottom: 5px;">プロンプト:</label>
