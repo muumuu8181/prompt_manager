@@ -204,10 +204,22 @@
                 localStorage.setItem('currentTab', tabName);
                 currentTab = tabName;
                 console.log(`✅ ${tabName}タブに切り替え完了`);
+                
+                // 追加の表示確認ログ
+                console.log(`🔍 ${tabName}-tab 表示状態:`, targetTab.style.display);
+                console.log(`🔍 ${tabName}-tab クラス:`, targetTab.className);
             } else {
                 console.error(`❌ タブ要素が見つかりません: ${tabName}`);
                 console.log('🔍 利用可能なタブ:', Array.from(document.querySelectorAll('[id$="-tab"]')).map(t => t.id));
                 console.log('🔍 利用可能なボタン:', Array.from(document.querySelectorAll('[data-tab]')).map(b => b.getAttribute('data-tab')));
+                
+                // 要素が見つからない場合の詳細デバッグ情報
+                if (!targetTab) {
+                    console.error(`❌ タブコンテンツ要素が見つかりません: #${tabName}-tab`);
+                }
+                if (!targetButton) {
+                    console.error(`❌ タブボタン要素が見つかりません: [data-tab="${tabName}"]`);
+                }
                 
                 // フォールバック: やらかしタブに切り替え
                 if (tabName !== 'yarakashi') {
@@ -219,14 +231,29 @@
         
         // ページ読み込み時に前回のタブを復元（Claude Codeタブ準備前の暫定処理）
         window.addEventListener('DOMContentLoaded', function() {
-            setTimeout(() => {
-                const savedTab = localStorage.getItem('currentTab') || 'yarakashi';
-                // Claude Codeタブ以外の場合のみ復元（Claude Codeタブは個別に処理）
-                if (savedTab !== 'claude-code') {
-                    console.log(`🔄 タブ状態復元（暫定）: ${savedTab}`);
-                    window.switchTab(savedTab);
+            // Claude Codeタブの動的追加完了を待つ
+            const waitForClaudeTab = () => {
+                const claudeCodeTab = document.getElementById('claude-code-tab');
+                if (claudeCodeTab) {
+                    // Claude Codeタブ準備完了後にタブ復元
+                    setTimeout(() => {
+                        const savedTab = localStorage.getItem('currentTab') || 'yarakashi';
+                        console.log(`🔄 タブ状態復元（Claude Codeタブ準備完了後）: ${savedTab}`);
+                        window.switchTab(savedTab);
+                    }, 100);
+                } else {
+                    // Claude Codeタブがまだない場合、他のタブのみ復元
+                    setTimeout(() => {
+                        const savedTab = localStorage.getItem('currentTab') || 'yarakashi';
+                        if (savedTab !== 'claude-code') {
+                            console.log(`🔄 タブ状態復元（暫定）: ${savedTab}`);
+                            window.switchTab(savedTab);
+                        }
+                    }, 50);
                 }
-            }, 300);
+            };
+            
+            setTimeout(waitForClaudeTab, 400);
         });
         
         // 🔍 共通検索関数（車輪の再発明解消）
@@ -1736,6 +1763,17 @@
         .tab-content.active {
             display: block;
         }
+        
+        /* 初期状態でやらかしタブを表示 */
+        #yarakashi-tab {
+            display: block !important;
+        }
+        
+        /* やらかしタブボタンの初期状態 */
+        .tab-button[data-tab="yarakashi"] {
+            background: #4CAF50;
+            color: white;
+        }
 
         /* やらかしリスト専用スタイル */
         .yarakashi-item {
@@ -1772,7 +1810,7 @@
 </head>
 <body>
     <div class="container">
-        <div class="version-badge">v0.92</div>
+        <div class="version-badge">v0.93</div>
         <div class="header">
             <h1>📋 統合管理アプリ</h1>
             
@@ -1790,7 +1828,7 @@
         
         <!-- タブメニュー（ヘッダー外） -->
         <div class="tab-menu" style="margin-top: 0px; background: #f8f9fa; padding: 5px 15px; border-bottom: 1px solid #e9ecef;">
-                <button class="tab-button" data-tab="yarakashi" onclick="switchTab('yarakashi')">
+                <button class="tab-button active" data-tab="yarakashi" onclick="switchTab('yarakashi')">
                     🚨 やらかしリスト
                 </button>
                 <button class="tab-button" data-tab="issues" onclick="switchTab('issues')">
@@ -1805,7 +1843,7 @@
         </div>
 
         <!-- やらかしリストタブ -->
-        <div id="yarakashi-tab" class="tab-content">
+        <div id="yarakashi-tab" class="tab-content active">
             <!-- 🚨 やらかし入力パネル -->
             <div class="major-panel" style="border: 5px solid #f44336; border-radius: 12px; padding: 20px; margin-bottom: 20px; background: #fff8f8; box-shadow: 0 4px 8px rgba(244, 67, 54, 0.3);">
                 <h3 style="margin: 0 0 15px 0; color: #f44336; font-size: 1.2rem; font-weight: bold;">🚨 やらかし入力エリア</h3>
@@ -3438,12 +3476,7 @@
                 novelAiTab.parentNode.insertBefore(claudeCodeTab, novelAiTab.nextSibling);
                 console.log('✅ Claude Codeタブ追加完了');
                 
-                // タブ追加完了後にタブ復元処理を実行
-                setTimeout(() => {
-                    const savedTab = localStorage.getItem('currentTab') || 'yarakashi';
-                    console.log(`🔄 タブ状態復元（Claude Codeタブ準備完了後）: ${savedTab}`);
-                    window.switchTab(savedTab);
-                }, 100);
+                // タブ復元処理は統一されたDOMContentLoadedハンドラで実行されるので削除
             }
         });
         
