@@ -1763,7 +1763,7 @@
 </head>
 <body>
     <div class="container">
-        <div class="version-badge">v0.85</div>
+        <div class="version-badge">v0.86</div>
         <div class="header">
             <h1>📋 統合管理アプリ</h1>
             
@@ -1830,9 +1830,13 @@
                 
                 <!-- 🔍 やらかし検索機能 -->
                 <div style="margin-bottom: 15px;">
-                    <input type="text" id="yarakashi-search" placeholder="🔍 やらかしを検索（タイトル・内容・カテゴリ）" 
-                           style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px;"
-                           oninput="filterYarakashiList()">
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <input type="text" id="yarakashi-search" placeholder="🔍 やらかしを検索（タイトル・内容・カテゴリ）" 
+                               style="flex: 1; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px;"
+                               oninput="filterYarakashiList()" onkeypress="if(event.key==='Enter') filterYarakashiList()">
+                        <button onclick="filterYarakashiList()" style="background: #7B68EE; color: white; padding: 10px 15px; border: none; border-radius: 8px; cursor: pointer;">🔍 検索</button>
+                        <button onclick="clearYarakashiSearch()" style="background: #666; color: white; padding: 10px 15px; border: none; border-radius: 8px; cursor: pointer;">クリア</button>
+                    </div>
                     <div style="margin-top: 5px; font-size: 12px; color: #666;">
                         <span id="yarakashi-search-result">全 <span id="total-count">0</span> 件</span>
                     </div>
@@ -1883,9 +1887,13 @@
                 
                 <!-- 🔍 課題検索機能 -->
                 <div style="margin-bottom: 15px;">
-                    <input type="text" id="issue-search" placeholder="🔍 課題を検索（タイトル・内容・プロジェクト）" 
-                           style="width: 100%; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px;"
-                           oninput="filterIssueList()">
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <input type="text" id="issue-search" placeholder="🔍 課題を検索（タイトル・内容・プロジェクト）" 
+                               style="flex: 1; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px;"
+                               oninput="filterIssueList()" onkeypress="if(event.key==='Enter') filterIssueList()">
+                        <button onclick="filterIssueList()" style="background: #7B68EE; color: white; padding: 10px 15px; border: none; border-radius: 8px; cursor: pointer;">🔍 検索</button>
+                        <button onclick="clearIssueSearch()" style="background: #666; color: white; padding: 10px 15px; border: none; border-radius: 8px; cursor: pointer;">クリア</button>
+                    </div>
                     <div style="margin-top: 5px; font-size: 12px; color: #666;">
                         <span id="issue-search-result">全 <span id="issue-total-count">0</span> 件</span>
                     </div>
@@ -1902,9 +1910,22 @@
             <div class="controls">
                 <!-- タイトル入力エリア -->
                 <div class="title-section">
-                <div class="title-input-row">
-                    <h3>📝 プロンプトタイトル</h3>
-                    <input type="text" id="promptTitle" class="title-input" placeholder="プロンプトにタイトルを付けてください（例: 森の中の美少女、戦闘シーンなど）" maxlength="50">
+                <div class="title-input-row" style="display: flex; gap: 15px; align-items: end; width: 70%;">
+                    <div style="flex: 2;">
+                        <h3>📝 プロンプトタイトル</h3>
+                        <input type="text" id="promptTitle" class="title-input" placeholder="プロンプトにタイトルを付けてください（例: 森の中の美少女、戦闘シーンなど）" maxlength="50" style="width: 100%;">
+                    </div>
+                    <div style="flex: 1;">
+                        <h3>🏷️ カテゴリ</h3>
+                        <select id="promptCategory" class="title-input" style="width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 6px;">
+                            <option value="">選択してください</option>
+                            <option value="character">キャラクター</option>
+                            <option value="background">背景</option>
+                            <option value="scene">シーン</option>
+                            <option value="style">スタイル</option>
+                            <option value="other">その他</option>
+                        </select>
+                    </div>
                 </div>
             </div>
 
@@ -3643,6 +3664,24 @@
             if (searchInput) {
                 searchInput.value = '';
                 displayClaudePrompts('');
+            }
+        };
+        
+        // やらかし管理検索クリア機能
+        window.clearYarakashiSearch = function() {
+            const searchInput = document.getElementById('yarakashi-search');
+            if (searchInput) {
+                searchInput.value = '';
+                displayYarakashiList('');
+            }
+        };
+        
+        // 課題リスト検索クリア機能
+        window.clearIssueSearch = function() {
+            const searchInput = document.getElementById('issue-search');
+            if (searchInput) {
+                searchInput.value = '';
+                displayIssuesList('');
             }
         };
         
