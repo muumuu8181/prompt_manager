@@ -1763,7 +1763,7 @@
 </head>
 <body>
     <div class="container">
-        <div class="version-badge">v0.87</div>
+        <div class="version-badge">v0.88</div>
         <div class="header">
             <h1>📋 統合管理アプリ</h1>
             
@@ -1910,14 +1910,14 @@
             <div class="controls">
                 <!-- タイトル入力エリア -->
                 <div class="title-section">
-                <div class="title-input-row" style="display: flex; gap: 15px; align-items: end; width: 70%;">
-                    <div style="flex: 2;">
-                        <h3>📝 プロンプトタイトル</h3>
-                        <input type="text" id="promptTitle" class="title-input" placeholder="プロンプトにタイトルを付けてください（例: 森の中の美少女、戦闘シーンなど）" maxlength="50" style="width: 70%;">
+                <div class="title-input-row" style="display: flex; gap: 15px; align-items: center; width: 100%;">
+                    <div style="display: flex; align-items: center; gap: 10px; flex: 2;">
+                        <label style="min-width: 140px; font-weight: 600; font-size: 1rem;">📝 プロンプトタイトル:</label>
+                        <input type="text" id="promptTitle" class="title-input" placeholder="プロンプトにタイトルを付けてください（例: 森の中の美少女、戦闘シーンなど）" maxlength="50" style="flex: 1;">
                     </div>
-                    <div style="flex: 1;">
-                        <h3>🏷️ カテゴリ</h3>
-                        <select id="promptCategory" class="title-input" style="width: 70%; padding: 10px; border: 2px solid #ddd; border-radius: 6px;">
+                    <div style="display: flex; align-items: center; gap: 10px; flex: 1;">
+                        <label style="min-width: 80px; font-weight: 600; font-size: 1rem;">🏷️ カテゴリ:</label>
+                        <select id="promptCategory" class="title-input" style="flex: 1; padding: 10px; border: 2px solid #ddd; border-radius: 6px;">
                             <option value="">選択してください</option>
                             <option value="character">キャラクター</option>
                             <option value="background">背景</option>
@@ -1972,6 +1972,14 @@
                     <button onclick="clearAllInputs()" class="btn-clear">🧹 クリア</button>
                 </div>
                 
+                <!-- サンプルボタンパネル -->
+                <div class="sample-panel" style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #e9ecef;">
+                    <h4 style="margin: 0 0 10px 0; color: #495057; font-size: 14px;">🎯 クイックサンプル</h4>
+                    <button onclick="loadSamplePrompt()" style="background: #28a745; color: white; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; transition: all 0.2s;" onmouseover="this.style.background='#218838'" onmouseout="this.style.background='#28a745'">
+                        📝 サンプル
+                    </button>
+                </div>
+
                 <!-- キーワード検索 -->
                 <div class="search-within-save">
                     <div class="search-inline">
@@ -2379,6 +2387,51 @@
             currentEditingId = null;
             updatePotionPreview();
             updateSaveButtons();
+        }
+
+        // サンプルプロンプトの読み込み
+        function loadSamplePrompt() {
+            debugLog('=== サンプルプロンプト読み込み開始 ===', 'info');
+            
+            // タイトル入力フィールドにサンプルタイトルを設定
+            document.getElementById('promptTitle').value = '森の中の美少女';
+            
+            // カテゴリー選択フィールドにサンプルカテゴリーを設定
+            document.getElementById('promptCategory').value = 'character';
+            
+            // メインプロンプトにサンプルプロンプトを設定
+            document.getElementById('mainPrompt').value = 'beautiful anime girl in forest, detailed face, masterpiece, high quality, soft lighting, nature background, peaceful atmosphere';
+            
+            // キャラクター1のテキストエリアにサンプルテキストを設定
+            document.getElementById('character1').value = 'long brown hair, green eyes, white dress, gentle smile, standing pose, looking at viewer';
+            
+            // キャラクター2のテキストエリアにサンプルテキストを設定
+            document.getElementById('character2').value = 'short blonde hair, blue eyes, red jacket, cheerful expression, sitting on tree stump';
+            
+            // キャラクター3-6のテキストエリアにサンプルテキストを設定
+            document.getElementById('character3to6').value = 'fairy companion: small wings, glowing aura, magical sparkles\nforest animals: rabbits, birds, deer in background\nfloral elements: colorful flowers, vines, cherry blossoms\nsunlight filtering through trees, magical atmosphere';
+            
+            // サンプル用のタグを設定
+            currentTags.clear();
+            currentTags.add('サンプル');
+            currentTags.add('森');
+            currentTags.add('美少女');
+            currentTags.add('キャラクター');
+            
+            // タグをグローバルセットに追加
+            currentTags.forEach(tag => allTags.add(tag));
+            
+            // UI更新
+            updateTagsDisplay();
+            
+            // 編集中IDをクリア（新規作成モード）
+            currentEditingId = null;
+            updateSaveButtons();
+            
+            // 成功メッセージ表示
+            showNotification('サンプルプロンプトを読み込みました！✨');
+            
+            debugLog('サンプルプロンプト読み込み完了', 'success');
         }
 
         // クリップボードから保存
