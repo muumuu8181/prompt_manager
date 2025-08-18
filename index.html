@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Novel AI プロンプト管理アプリ [Firebase Test Mode]</title>
+    <title>Novel AI プロンプト管理アプリ v0.94 - タブ切り替え修正版</title>
     
     <!-- 🔥 Firebase Test Integration - Phase 1-2 -->
     <script type="module">
@@ -229,32 +229,7 @@
             }
         };
         
-        // ページ読み込み時に前回のタブを復元（Claude Codeタブ準備前の暫定処理）
-        window.addEventListener('DOMContentLoaded', function() {
-            // Claude Codeタブの動的追加完了を待つ
-            const waitForClaudeTab = () => {
-                const claudeCodeTab = document.getElementById('claude-code-tab');
-                if (claudeCodeTab) {
-                    // Claude Codeタブ準備完了後にタブ復元
-                    setTimeout(() => {
-                        const savedTab = localStorage.getItem('currentTab') || 'yarakashi';
-                        console.log(`🔄 タブ状態復元（Claude Codeタブ準備完了後）: ${savedTab}`);
-                        window.switchTab(savedTab);
-                    }, 100);
-                } else {
-                    // Claude Codeタブがまだない場合、他のタブのみ復元
-                    setTimeout(() => {
-                        const savedTab = localStorage.getItem('currentTab') || 'yarakashi';
-                        if (savedTab !== 'claude-code') {
-                            console.log(`🔄 タブ状態復元（暫定）: ${savedTab}`);
-                            window.switchTab(savedTab);
-                        }
-                    }, 50);
-                }
-            };
-            
-            setTimeout(waitForClaudeTab, 400);
-        });
+        // ページ読み込み時の統一初期化処理（v0.94修正版）
         
         // 🔍 共通検索関数（車輪の再発明解消）
         window.universalSearch = function(dataArray, searchQuery, searchFields) {
@@ -3392,34 +3367,16 @@
         `;
         document.head.appendChild(style);
         
-        // ページ読み込み完了時の処理
-        window.addEventListener('DOMContentLoaded', function() {
-            console.log('🚀 統合管理アプリ初期化完了');
-            
-            // 初期データ追加は一回だけ（コメントアウト）
-            /* setTimeout(() => {
-                if (window.yarakashiList && window.yarakashiList.length === 0 && window.firebaseTest && window.firebaseTest.getCurrentUser()) {
-                    console.log('📝 初期やらかしデータ追加中');
-                    // 今日のやらかしを追加
-                    const titleInput = document.getElementById('yarakashi-title');
-                    const categorySelect = document.getElementById('yarakashi-category');
-                    const contentTextarea = document.getElementById('yarakashi-content');
-                    
-                    if (titleInput && categorySelect && contentTextarea) {
-                        titleInput.value = 'Firebase認証でauth.emailを使用してPERMISSION_DENIED発生';
-                        categorySelect.value = 'firebase';
-                        contentTextarea.value = 'Firebase Realtime Databaseのルールが `$uid === auth.uid` なのに、コードで `auth.email` を使用。結果：全てのDB操作でPERMISSION_DENIEDエラー。修正：`auth.uid`を使用するように変更。';
-                        window.addYarakashi();
-                    }
-                }
-            }, 3000); */
-        });
+        // 削除済み - 統一初期化処理に集約
     </script>
     
-    <!-- Claude Codeタブを追加 -->
+    <!-- 統一初期化処理 - v0.94 タブ切り替え修正版 -->
     <script>
-        // Claude Codeタブのコンテンツを動的に追加（優先実行）
+        // 全ての初期化処理を統合（DOMContentLoaded競合解決）
         window.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 統合管理アプリ初期化開始（v0.94）');
+            
+            // Step1: Claude Codeタブの動的追加
             const novelAiTab = document.getElementById('novel-ai-tab');
             if (novelAiTab) {
                 const claudeCodeTab = document.createElement('div');
@@ -3475,9 +3432,28 @@
                 
                 novelAiTab.parentNode.insertBefore(claudeCodeTab, novelAiTab.nextSibling);
                 console.log('✅ Claude Codeタブ追加完了');
-                
-                // タブ復元処理は統一されたDOMContentLoadedハンドラで実行されるので削除
             }
+            
+            // Step2: タブ切り替え機能の初期化と復元
+            setTimeout(() => {
+                const savedTab = localStorage.getItem('currentTab') || 'yarakashi';
+                console.log(`🔄 タブ状態復元: ${savedTab}`);
+                
+                // 全てのタブボタンとコンテンツを確認
+                const tabButtons = document.querySelectorAll('.tab-button');
+                const tabContents = document.querySelectorAll('.tab-content');
+                
+                console.log(`🔍 タブボタン数: ${tabButtons.length}, コンテンツ数: ${tabContents.length}`);
+                
+                if (tabButtons.length > 0 && tabContents.length > 0) {
+                    window.switchTab(savedTab);
+                    console.log('✅ タブ復元完了');
+                } else {
+                    console.error('❌ タブ要素が見つかりません');
+                }
+            }, 200);
+            
+            console.log('🚀 統合管理アプリ初期化完了（v0.94）');
         });
         
         // 📋 課題リスト管理機能
