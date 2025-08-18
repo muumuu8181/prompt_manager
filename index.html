@@ -1763,7 +1763,7 @@
 </head>
 <body>
     <div class="container">
-        <div class="version-badge">v0.90</div>
+        <div class="version-badge">v0.91</div>
         <div class="header">
             <h1>📋 統合管理アプリ</h1>
             
@@ -1797,9 +1797,13 @@
 
         <!-- やらかしリストタブ -->
         <div id="yarakashi-tab" class="tab-content">
-            <div class="yarakashi-section">
-                <div style="background: white; padding: 8px 15px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 8px;">
-                    <h3>🚨 新しいやらかしを追加</h3>
+            <!-- 🚨 やらかし入力パネル -->
+            <div class="major-panel" style="border: 5px solid #f44336; border-radius: 12px; padding: 20px; margin-bottom: 20px; background: #fff8f8; box-shadow: 0 4px 8px rgba(244, 67, 54, 0.3);">
+                <h3 style="margin: 0 0 15px 0; color: #f44336; font-size: 1.2rem; font-weight: bold;">🚨 やらかし入力エリア</h3>
+                
+                <div class="yarakashi-section">
+                    <div style="background: white; padding: 8px 15px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 8px;">
+                        <h4>新しいやらかしを追加</h4>
                     <div style="margin-bottom: 15px;">
                         <label for="yarakashi-title" style="display: block; font-weight: 600; margin-bottom: 5px;">タイトル:</label>
                         <input type="text" id="yarakashi-title" placeholder="やらかしの概要を入力" style="width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 6px;">
@@ -1827,6 +1831,11 @@
                         </button>
                     </div>
                 </div>
+            </div>
+            
+            <!-- 🔍 やらかし検索パネル -->
+            <div class="major-panel" style="border: 5px solid #FF9800; border-radius: 12px; padding: 20px; margin-bottom: 20px; background: #fff9f0; box-shadow: 0 4px 8px rgba(255, 152, 0, 0.3);">
+                <h3 style="margin: 0 0 15px 0; color: #FF9800; font-size: 1.2rem; font-weight: bold;">🔍 やらかし検索エリア</h3>
                 
                 <!-- 🔍 やらかし検索機能 -->
                 <div style="margin-bottom: 15px;">
@@ -1841,6 +1850,11 @@
                         <span id="yarakashi-search-result">全 <span id="total-count">0</span> 件</span>
                     </div>
                 </div>
+            </div>
+            
+            <!-- 📋 やらかしリスト表示パネル -->
+            <div class="major-panel" style="border: 5px solid #C62828; border-radius: 12px; padding: 20px; margin-bottom: 20px; background: #fff5f5; box-shadow: 0 4px 8px rgba(198, 40, 40, 0.3);">
+                <h3 style="margin: 0 0 15px 0; color: #C62828; font-size: 1.2rem; font-weight: bold;">📋 やらかしリスト表示</h3>
 
                 <div id="yarakashi-list" style="max-height: none; overflow: visible;">
                     <!-- やらかしリストがここに表示される -->
@@ -1850,9 +1864,13 @@
 
         <!-- 📋 課題リストタブ -->
         <div id="issues-tab" class="tab-content">
-            <div class="issues-section">
-                <div style="background: white; padding: 8px 15px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 8px;">
-                    <h3>📋 新しい課題を追加</h3>
+            <!-- 📋 課題入力パネル -->
+            <div class="major-panel" style="border: 5px solid #2196F3; border-radius: 12px; padding: 20px; margin-bottom: 20px; background: #f8fbff; box-shadow: 0 4px 8px rgba(33, 150, 243, 0.3);">
+                <h3 style="margin: 0 0 15px 0; color: #2196F3; font-size: 1.2rem; font-weight: bold;">📋 課題入力エリア</h3>
+                
+                <div class="issues-section">
+                    <div style="background: white; padding: 8px 15px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 8px;">
+                        <h4>新しい課題を追加</h4>
                     <div style="margin-bottom: 15px;">
                         <label for="issue-title" style="display: block; font-weight: 600; margin-bottom: 5px;">タイトル:</label>
                         <input type="text" id="issue-title" placeholder="課題の概要を入力" style="width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 6px;">
@@ -1884,6 +1902,11 @@
                         </button>
                     </div>
                 </div>
+            </div>
+            
+            <!-- 🔍 課題検索パネル -->
+            <div class="major-panel" style="border: 5px solid #03A9F4; border-radius: 12px; padding: 20px; margin-bottom: 20px; background: #f0faff; box-shadow: 0 4px 8px rgba(3, 169, 244, 0.3);">
+                <h3 style="margin: 0 0 15px 0; color: #03A9F4; font-size: 1.2rem; font-weight: bold;">🔍 課題検索エリア</h3>
                 
                 <!-- 🔍 課題検索機能 -->
                 <div style="margin-bottom: 15px;">
@@ -1898,6 +1921,11 @@
                         <span id="issue-search-result">全 <span id="issue-total-count">0</span> 件</span>
                     </div>
                 </div>
+            </div>
+            
+            <!-- 📋 課題リスト表示パネル -->
+            <div class="major-panel" style="border: 5px solid #3F51B5; border-radius: 12px; padding: 20px; margin-bottom: 20px; background: #f6f7ff; box-shadow: 0 4px 8px rgba(63, 81, 181, 0.3);">
+                <h3 style="margin: 0 0 15px 0; color: #3F51B5; font-size: 1.2rem; font-weight: bold;">📋 課題リスト表示</h3>
 
                 <div id="issue-list" style="max-height: none; overflow: visible;">
                     <!-- 課題リストがここに表示される -->
@@ -3351,15 +3379,16 @@
                 claudeCodeTab.id = 'claude-code-tab';
                 claudeCodeTab.className = 'tab-content';
                 claudeCodeTab.innerHTML = `
-                    <div style="background: white; padding: 8px 15px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 8px;">
-                        <h3>💻 Claude Code プロンプト管理</h3>
+                    <!-- 💻 プロンプト入力パネル -->
+                    <div style="border: 5px solid #7B68EE; border-radius: 12px; padding: 20px; margin-bottom: 20px; background: linear-gradient(135deg, #f8f6ff 0%, #ede7ff 100%); box-shadow: 0 4px 8px rgba(123, 104, 238, 0.3);">
+                        <h3 style="margin-top: 0; color: #7B68EE; font-size: 1.2em;">💻 プロンプト入力パネル</h3>
                         <div style="margin-bottom: 15px;">
-                            <label style="display: block; font-weight: 600; margin-bottom: 5px;">プロンプト:</label>
-                            <textarea id="claude-prompt" rows="8" placeholder="Claude Codeで使用するプロンプトを入力..." style="width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 6px; resize: vertical;"></textarea>
+                            <label style="display: block; font-weight: 600; margin-bottom: 5px; color: #444;">プロンプト:</label>
+                            <textarea id="claude-prompt" rows="8" placeholder="Claude Codeで使用するプロンプトを入力..." style="width: 100%; padding: 12px; border: 2px solid #7B68EE; border-radius: 8px; resize: vertical; font-size: 14px;"></textarea>
                         </div>
                         <div style="margin-bottom: 15px;">
-                            <label style="display: block; font-weight: 600; margin-bottom: 5px;">カテゴリ:</label>
-                            <select id="claude-category" style="width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 6px;">
+                            <label style="display: block; font-weight: 600; margin-bottom: 5px; color: #444;">カテゴリ:</label>
+                            <select id="claude-category" style="width: 100%; padding: 12px; border: 2px solid #7B68EE; border-radius: 8px; font-size: 14px;">
                                 <option value="coding">コーディング</option>
                                 <option value="debug">デバッグ</option>
                                 <option value="refactor">リファクタリング</option>
@@ -3368,27 +3397,32 @@
                                 <option value="other">その他</option>
                             </select>
                         </div>
-                        <button onclick="addClaudePrompt()" style="background: #7B68EE; color: white; padding: 12px 24px; border: none; border-radius: 6px; font-weight: 600; cursor: pointer;">
+                        <button onclick="addClaudePrompt()" style="background: #7B68EE; color: white; padding: 12px 24px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 14px; transition: background 0.3s;">
                             💻 プロンプト追加
                         </button>
                     </div>
                     
-                    <!-- 🔍 Claude プロンプト検索機能 -->
-                    <div style="margin-bottom: 15px;">
-                        <div style="display: flex; gap: 10px; margin-bottom: 5px;">
+                    <!-- 🔍 プロンプト検索パネル -->
+                    <div style="border: 5px solid #9C27B0; border-radius: 12px; padding: 20px; margin-bottom: 20px; background: linear-gradient(135deg, #fdf7ff 0%, #f3e5f5 100%); box-shadow: 0 4px 8px rgba(156, 39, 176, 0.3);">
+                        <h3 style="margin-top: 0; color: #9C27B0; font-size: 1.2em;">🔍 プロンプト検索パネル</h3>
+                        <div style="display: flex; gap: 10px; margin-bottom: 10px;">
                             <input type="text" id="claude-search" placeholder="🔍 Claude プロンプトを検索（内容・カテゴリ）" 
-                                   style="flex: 1; padding: 10px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px;"
+                                   style="flex: 1; padding: 12px; border: 2px solid #9C27B0; border-radius: 8px; font-size: 14px;"
                                    oninput="filterClaudePrompts()" onkeypress="if(event.key==='Enter') filterClaudePrompts()">
-                            <button onclick="filterClaudePrompts()" style="background: #7B68EE; color: white; padding: 10px 15px; border: none; border-radius: 8px; cursor: pointer;">🔍 検索</button>
-                            <button onclick="clearClaudeSearch()" style="background: #666; color: white; padding: 10px 15px; border: none; border-radius: 8px; cursor: pointer;">クリア</button>
+                            <button onclick="filterClaudePrompts()" style="background: #9C27B0; color: white; padding: 12px 16px; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; transition: background 0.3s;">🔍 検索</button>
+                            <button onclick="clearClaudeSearch()" style="background: #666; color: white; padding: 12px 16px; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; transition: background 0.3s;">クリア</button>
                         </div>
-                        <div style="font-size: 12px; color: #666;">
+                        <div style="font-size: 13px; color: #666; font-weight: 500;">
                             <span id="claude-search-result">全 <span id="claude-total-count">0</span> 件</span>
                         </div>
                     </div>
                     
-                    <div id="claude-prompt-list" style="min-height: 200px;">
-                        <!-- Claude Codeプロンプト一覧がここに表示される -->
+                    <!-- 📋 プロンプトリスト表示パネル -->
+                    <div style="border: 5px solid #673AB7; border-radius: 12px; padding: 20px; margin-bottom: 20px; background: linear-gradient(135deg, #faf8ff 0%, #ede7f6 100%); box-shadow: 0 4px 8px rgba(103, 58, 183, 0.3);">
+                        <h3 style="margin-top: 0; color: #673AB7; font-size: 1.2em;">📋 プロンプトリスト表示パネル</h3>
+                        <div id="claude-prompt-list" style="min-height: 200px;">
+                            <!-- Claude Codeプロンプト一覧がここに表示される -->
+                        </div>
                     </div>
                 `;
                 
