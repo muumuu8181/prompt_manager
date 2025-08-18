@@ -208,16 +208,25 @@
                 console.error(`❌ タブ要素が見つかりません: ${tabName}`);
                 console.log('🔍 利用可能なタブ:', Array.from(document.querySelectorAll('[id$="-tab"]')).map(t => t.id));
                 console.log('🔍 利用可能なボタン:', Array.from(document.querySelectorAll('[data-tab]')).map(b => b.getAttribute('data-tab')));
+                
+                // フォールバック: やらかしタブに切り替え
+                if (tabName !== 'yarakashi') {
+                    console.log('🔄 フォールバック: やらかしタブに切り替え');
+                    setTimeout(() => window.switchTab('yarakashi'), 100);
+                }
             }
         };
         
-        // ページ読み込み時に前回のタブを復元
+        // ページ読み込み時に前回のタブを復元（Claude Codeタブ準備前の暫定処理）
         window.addEventListener('DOMContentLoaded', function() {
             setTimeout(() => {
                 const savedTab = localStorage.getItem('currentTab') || 'yarakashi';
-                console.log(`🔄 タブ状態復元: ${savedTab}`);
-                window.switchTab(savedTab);
-            }, 500);
+                // Claude Codeタブ以外の場合のみ復元（Claude Codeタブは個別に処理）
+                if (savedTab !== 'claude-code') {
+                    console.log(`🔄 タブ状態復元（暫定）: ${savedTab}`);
+                    window.switchTab(savedTab);
+                }
+            }, 300);
         });
         
         // 🔍 共通検索関数（車輪の再発明解消）
@@ -1763,7 +1772,7 @@
 </head>
 <body>
     <div class="container">
-        <div class="version-badge">v0.91</div>
+        <div class="version-badge">v0.92</div>
         <div class="header">
             <h1>📋 統合管理アプリ</h1>
             
@@ -3371,7 +3380,7 @@
     
     <!-- Claude Codeタブを追加 -->
     <script>
-        // Claude Codeタブのコンテンツを動的に追加
+        // Claude Codeタブのコンテンツを動的に追加（優先実行）
         window.addEventListener('DOMContentLoaded', function() {
             const novelAiTab = document.getElementById('novel-ai-tab');
             if (novelAiTab) {
@@ -3428,6 +3437,13 @@
                 
                 novelAiTab.parentNode.insertBefore(claudeCodeTab, novelAiTab.nextSibling);
                 console.log('✅ Claude Codeタブ追加完了');
+                
+                // タブ追加完了後にタブ復元処理を実行
+                setTimeout(() => {
+                    const savedTab = localStorage.getItem('currentTab') || 'yarakashi';
+                    console.log(`🔄 タブ状態復元（Claude Codeタブ準備完了後）: ${savedTab}`);
+                    window.switchTab(savedTab);
+                }, 100);
             }
         });
         
