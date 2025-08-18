@@ -357,7 +357,7 @@
                 console.log(`🔍 [${index}] ID: ${yarakashi.id}, Title: ${yarakashi.title}`);
                 
                 const resolveButton = !yarakashi.resolved ? 
- 
+                    '' : 
                     `<button onclick="unresolveYarakashi('${yarakashi.id}')" style="background: #FF9800; color: white; padding: 5px 10px; border: none; border-radius: 4px; cursor: pointer;">未解決に戻す</button>`;
                 
                 // HTMLエスケープ処理
