@@ -1,11 +1,11 @@
-# 🎨 Novel AI プロンプト管理アプリ (2025-08-04)
+# 🎨 AI Prompt Manager
 
-## 概要
-- **作成日**: 2025-08-04
-- **目的**: Novel AI対応複数キャラクター・タグ管理機能付きプロンプト管理システム
-- **使用技術**: HTML5, CSS3, Vanilla JavaScript
+## Overview
+- **Created**: 2025-08-04
+- **Purpose**: Advanced prompt management system with multi-character and tag management support
+- **Technology**: HTML5, CSS3, Vanilla JavaScript
 
-Novel AIの複数キャラクター機能に対応した、高度なプロンプト管理Webアプリケーションです。
+A sophisticated web application for managing AI prompts with support for multiple characters and advanced tagging features.
 
 ## ✨ 主な機能
 
